@@ -255,6 +255,7 @@ public class HttpServer implements FilterContainer {
     }
 
     public Builder trustStore(String location, String password, String type) {
+      System.out.println("set truststore:" + location);
       this.trustStore = location;
       this.trustStorePassword = password;
       this.trustStoreType = type;

@@ -52,7 +52,10 @@ import org.apache.hadoop.security.ssl.FileBasedKeyStoresFactory;
 import org.apache.hadoop.security.ssl.SSLFactory;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.GeneralName;
+import org.bouncycastle.asn1.x509.GeneralNames;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.X509v1CertificateBuilder;
@@ -65,6 +68,7 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
+import org.bouncycastle.x509.X509V3CertificateGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,49 +104,25 @@ public final class KeyStoreTestUtil {
     Date to = new Date(from.getTime() + days * 86400000L);
     BigInteger sn = new BigInteger(64, new SecureRandom());
     KeyPair keyPair = pair;
-    X500Name name = new X500Name(dn);
-
+    X509V3CertificateGenerator certGen = new X509V3CertificateGenerator();
     X500Principal  dnName = new X500Principal(dn);
 
-    AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find(algorithm);
-    AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
-    AsymmetricKeyParameter privateKeyAsymKeyParam = null;
-    try {
-      privateKeyAsymKeyParam = PrivateKeyFactory.createKey(pair.getPrivate().getEncoded());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(pair.getPublic().getEncoded());
-    ContentSigner sigGen = null;
-    try {
-        sigGen = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(privateKeyAsymKeyParam);
-    } catch (OperatorCreationException e) {
-      e.printStackTrace();
-    }
-    //  X500Name name = new X500Name(dn);
+    GeneralName altName = new GeneralName(GeneralName.dNSName, "localhost@EXAMPLE.COM");
+    GeneralName altName2 = new GeneralName(GeneralName.dNSName, "localhost");
+    GeneralName altName3 = new GeneralName(GeneralName.dNSName, "client/localhost@EXAMPLE.COM");
 
-    X509v1CertificateBuilder certGen = new X509v1CertificateBuilder(name, sn, from, to, name, subPubKeyInfo);
+    GeneralNames subjectAltName = new GeneralNames(new GeneralName[]{altName,altName2, altName3});
+    certGen.addExtension(X509Extensions.SubjectAlternativeName, true, subjectAltName);
 
-//    certGen.setSerialNumber(sn);
-//    certGen.setIssuerDN(dnName);
-//    certGen.setNotBefore(from);
-//    certGen.setNotAfter(to);
-//    certGen.setSubjectDN(dnName);
-//    certGen.setPublicKey(keyPair.getPublic());
-//    certGen.setSignatureAlgorithm(algorithm);
-
-//    Iterator it = certGen.getSignatureAlgNames();
-//    while(it.hasNext()) {
-//      System.out.println("alg: " + it.next());
-//    }
-
-    X509CertificateHolder certificateHolder = certGen.build(sigGen);
-
-    try {
-      return new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider()).getCertificate(certificateHolder);
-    } catch (CertificateException e) {
-      throw new RuntimeException(e);
-    }
+    certGen.setSerialNumber(sn);
+    certGen.setIssuerDN(dnName);
+    certGen.setNotBefore(from);
+    certGen.setNotAfter(to);
+    certGen.setSubjectDN(dnName);
+    certGen.setPublicKey(keyPair.getPublic());
+    certGen.setSignatureAlgorithm(algorithm);
+    X509Certificate cert = certGen.generate(pair.getPrivate());
+    return cert;
   }
 
   public static KeyPair generateKeyPair(String algorithm)
@@ -270,7 +250,7 @@ public final class KeyStoreTestUtil {
       KeyPair cKP = KeyStoreTestUtil.generateKeyPair("RSA");
       X509Certificate cCert =
         KeyStoreTestUtil.generateCertificate("CN=localhost, O=client", cKP, 30,
-                                             "SHA256withDSA");
+                                             "SHA256withRSA");
       KeyStoreTestUtil.createKeyStore(clientKS, clientPassword, "client",
                                       cKP.getPrivate(), cCert);
       certs.put("client", cCert);
@@ -279,7 +259,7 @@ public final class KeyStoreTestUtil {
     KeyPair sKP = KeyStoreTestUtil.generateKeyPair("RSA");
     X509Certificate sCert =
       KeyStoreTestUtil.generateCertificate("CN=localhost, O=server", sKP, 30,
-                                           "SHA256withDSA");
+                                           "SHA256withRSA");
     KeyStoreTestUtil.createKeyStore(serverKS, serverPassword, "server",
                                     sKP.getPrivate(), sCert);
     certs.put("server", sCert);
@@ -294,7 +274,6 @@ public final class KeyStoreTestUtil {
     saveConfig(sslClientConfFile, clientSSLConf);
     saveConfig(sslServerConfFile, serverSSLConf);
 
-    conf.set(SSLFactory.SSL_HOSTNAME_VERIFIER_KEY, "ALLOW_ALL");
 
 
     conf.set("hadoop.ssl.client.conf", "file://" + sslClientConfFile.getAbsolutePath());

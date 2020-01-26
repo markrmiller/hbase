@@ -133,10 +133,10 @@ public class TestSSLHttpServer extends HttpServerFunctionalTest {
 
     System.out.println("location:" + sslConf.get("ssl.server.truststore.location"));
     //System.out.println("hostnamever:" + clientSslFactory.getHostnameVerifier().toString());
-    sslConf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
+   // sslConf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
     sslConf.set("hadoop.ssl.enabled.protocols", "TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2,TLSv1.3");
 
-    conf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
+   // conf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
 
   //  System.out.println("hostnamever:" + clientSslFactory.getHostnameVerifier().toString());
 
