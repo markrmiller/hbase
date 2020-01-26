@@ -110,8 +110,9 @@ public final class KeyStoreTestUtil {
     GeneralName altName = new GeneralName(GeneralName.dNSName, "localhost@EXAMPLE.COM");
     GeneralName altName2 = new GeneralName(GeneralName.dNSName, "localhost");
     GeneralName altName3 = new GeneralName(GeneralName.dNSName, "client/localhost@EXAMPLE.COM");
-
-    GeneralNames subjectAltName = new GeneralNames(new GeneralName[]{altName,altName2, altName3});
+    GeneralName altName4 = new GeneralName(GeneralName.dNSName, "coremetal16@metallan.org");
+    GeneralName altName5 = new GeneralName(GeneralName.dNSName, "coremetal16");
+    GeneralNames subjectAltName = new GeneralNames(new GeneralName[]{altName,altName2, altName4, altName5});
     certGen.addExtension(X509Extensions.SubjectAlternativeName, true, subjectAltName);
 
     certGen.setSerialNumber(sn);
@@ -128,7 +129,7 @@ public final class KeyStoreTestUtil {
   public static KeyPair generateKeyPair(String algorithm)
     throws NoSuchAlgorithmException {
     KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
-    keyGen.initialize(1024);
+    keyGen.initialize(2048);
     return keyGen.genKeyPair();
   }
 

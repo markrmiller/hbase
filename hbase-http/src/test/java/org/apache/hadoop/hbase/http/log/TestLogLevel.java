@@ -103,9 +103,12 @@ public class TestLogLevel {
   @BeforeClass
   public static void setUp() throws Exception {
 
-    serverConf = new Configuration();
+
     clientConf = new Configuration();
-    HBaseCommonTestingUtility htu = new HBaseCommonTestingUtility(serverConf);
+    HBaseCommonTestingUtility htu = new HBaseCommonTestingUtility();
+
+
+    serverConf = htu.getConfiguration();
 
     String classDir = KeyStoreTestUtil.getClasspathDir(TestLogLevel.class);
 
@@ -121,6 +124,8 @@ public class TestLogLevel {
     KEYTAB_FILE = new File(BASEDIR,"keytab");
 
     KEYTAB_FILE.getParentFile().mkdirs();
+
+    serverConf.set("hadoop.home.dir", BASEDIR);
 
     setupSSL(base, serverConf);
 
