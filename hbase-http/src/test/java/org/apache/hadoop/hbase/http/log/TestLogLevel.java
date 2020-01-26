@@ -40,6 +40,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.CommonConfigurationKeys;
 import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
 import org.apache.hadoop.hbase.http.HttpConfig;
@@ -123,6 +124,8 @@ public class TestLogLevel {
 
     setupSSL(base, serverConf);
 
+    serverConf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
+    serverConf.set("ssl.hostname.verifier", "ALLOW_ALL");
     kdc = setupMiniKdc();
     // Create two principles: a client and an HTTP principal
 
@@ -161,8 +164,8 @@ public class TestLogLevel {
 
         LOG.info("Starting KDC server at " + KDC_SERVER_HOST + ":" + kdcPort);
 
-        kdc.getKdcConfig().setString("default_tkt_enctypes", "AES_128_GCM_SHA256 rsa_pkcs1_sha256 aes256-cts-hmac-sha1-96 des-cbc-md5 des-cbc-crc aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 camellia256-cts-cmac des-cbc-crc SSL_RSA_WITH_RC4_128_SHA ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp512r1_sha512 rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 dsa_sha256 ecdsa_sha224 rsa_sha224 dsa_sha224 ecdsa_sha1 rsa_pkcs1_sha1, dsa_sha1");
-        kdc.getKdcConfig().setString("default_tgs_enctypes", "AES_128_GCM_SHA256 rsa_pkcs1_sha256 aes256-cts-hmac-sha1-96 des-cbc-md5 des-cbc-crc aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 camellia256-cts-cmac des-cbc-crc SSL_RSA_WITH_RC4_128_SHA ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp512r1_sha512 rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 dsa_sha256 ecdsa_sha224 rsa_sha224 dsa_sha224 ecdsa_sha1 rsa_pkcs1_sha1, dsa_sha1");
+        //kdc.getKdcConfig().setString("default_tkt_enctypes", "AES_128_GCM_SHA256 rsa_pkcs1_sha256 aes256-cts-hmac-sha1-96 des-cbc-md5 des-cbc-crc aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 camellia256-cts-cmac des-cbc-crc SSL_RSA_WITH_RC4_128_SHA ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp512r1_sha512 rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 dsa_sha256 ecdsa_sha224 rsa_sha224 dsa_sha224 ecdsa_sha1 rsa_pkcs1_sha1, dsa_sha1");
+       // kdc.getKdcConfig().setString("default_tgs_enctypes", "AES_128_GCM_SHA256 rsa_pkcs1_sha256 aes256-cts-hmac-sha1-96 des-cbc-md5 des-cbc-crc aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 camellia256-cts-cmac des-cbc-crc SSL_RSA_WITH_RC4_128_SHA ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp512r1_sha512 rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 dsa_sha256 ecdsa_sha224 rsa_sha224 dsa_sha224 ecdsa_sha1 rsa_pkcs1_sha1, dsa_sha1");
 
         kdc.init();
 
@@ -203,12 +206,16 @@ public class TestLogLevel {
    * @return {@link Configuration} instance with ssl configs loaded.
    */
   private static Configuration getSslConfig(Configuration sslConf ){
-    String sslServerConfFile = BASEDIR + "/ssl-server.xml";
-    String sslClientConfFile = BASEDIR + "/ssl-client.xml";
-    sslConf.addResource(sslServerConfFile);
-    sslConf.addResource(sslClientConfFile);
-    sslConf.set(SSLFactory.SSL_SERVER_CONF_KEY, "ssl-server.xml");
-    sslConf.set(SSLFactory.SSL_CLIENT_CONF_KEY, "ssl-client.xml");
+
+    File sslClientConfFile = new File(BASEDIR + "/ssl-client.xml");
+    File sslServerConfFile = new File(BASEDIR + "/ssl-server.xml");
+
+    sslConf.addResource(new Path(sslServerConfFile.getAbsolutePath()));
+    sslConf.addResource(new Path(sslClientConfFile.getAbsolutePath()));
+    sslConf.set("hadoop.ssl.client.conf", "file://" + sslClientConfFile.getAbsolutePath());
+    sslConf.set("hadoop.ssl.server.conf", "file://" + sslServerConfFile.getAbsolutePath());
+    sslConf.set("ssl.client.conf", "file://" + sslClientConfFile.getAbsolutePath());
+    sslConf.set("ssl.server.conf", "file://" + sslServerConfFile.getAbsolutePath());
     return sslConf;
   }
 
@@ -291,6 +298,7 @@ public class TestLogLevel {
         .addEndpoint(new URI(protocol + "://localhost:0"))
         .setFindPort(true)
         .setConf(serverConf);
+
     if (isSpnego) {
       // Set up server Kerberos credentials.
       // Since the server may fall back to simple authentication,

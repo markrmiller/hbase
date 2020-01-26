@@ -133,9 +133,12 @@ public class TestSSLHttpServer extends HttpServerFunctionalTest {
 
     System.out.println("location:" + sslConf.get("ssl.server.truststore.location"));
     //System.out.println("hostnamever:" + clientSslFactory.getHostnameVerifier().toString());
+    sslConf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
+    sslConf.set("hadoop.ssl.enabled.protocols", "TLSv1,SSLv2Hello,TLSv1.1,TLSv1.2,TLSv1.3");
 
+    conf.set("hadoop.ssl.hostname.verifier", "ALLOW_ALL");
 
-   // System.out.println("hostnamever:" + clientSslFactory.getHostnameVerifier().toString());
+  //  System.out.println("hostnamever:" + clientSslFactory.getHostnameVerifier().toString());
 
     //assertTrue(new File(sslConf.get("hadoop.ssl.server.keystore.location")).exists());
 
@@ -154,15 +157,33 @@ public class TestSSLHttpServer extends HttpServerFunctionalTest {
         HBaseConfiguration.getPassword(sslConf, "ssl.server.truststore.password", null),
         sslConf.get("ssl.server.truststore.type", "jks")).build();
     server.addServlet("echo", "/echo", TestHttpServer.EchoServlet.class);
+
+    System.setProperty("javax.net.ssl.trustStore",sslConf.get("ssl.server.truststore.location"));
+
     server.start();
+
     baseUrl = new URL("https://"
       + NetUtils.getHostPortString(server.getConnectorAddress(0)));
     LOG.info("HTTP server started: " + baseUrl);
 
+    //System.setProperty("javax.net.ssl.trustStore",sslConf.get("ssl.server.truststore.location"));
+//    sslConf.set("ssl.client.truststore.location", BASEDIR + "/trustKS.jsk");
+//    sslConf.set("hadoop.ssl.client.truststore.location", BASEDIR + "/trustKS.jsk");
+//    sslConf.set("ssl.client.truststore.password", "trustP");
+//    sslConf.set("hadoop.ssl.client.truststore.password", "trustP");
+
+
+
+    // sslConf.set("ssl.client.keystore.location", "file://" + BASEDIR + "/trustKS.jsk");
+    sslConf.set("hadoop.ssl.client.conf", "file://" + BASEDIR + "/ssl-client.xml");
+    sslConf.set("hadoop." + SSLFactory.SSL_REQUIRE_CLIENT_CERT_KEY, "false");
+
+    System.out.println("STARTS CLIENT!");
 
     clientSslFactory = new SSLFactory(SSLFactory.Mode.CLIENT, sslConf);
 
     clientSslFactory.init();
+
   }
 
   @AfterClass

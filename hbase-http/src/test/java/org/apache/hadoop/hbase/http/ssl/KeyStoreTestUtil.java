@@ -270,7 +270,7 @@ public final class KeyStoreTestUtil {
       KeyPair cKP = KeyStoreTestUtil.generateKeyPair("RSA");
       X509Certificate cCert =
         KeyStoreTestUtil.generateCertificate("CN=localhost, O=client", cKP, 30,
-                                             "SHA256withRSA");
+                                             "SHA256withDSA");
       KeyStoreTestUtil.createKeyStore(clientKS, clientPassword, "client",
                                       cKP.getPrivate(), cCert);
       certs.put("client", cCert);
@@ -279,7 +279,7 @@ public final class KeyStoreTestUtil {
     KeyPair sKP = KeyStoreTestUtil.generateKeyPair("RSA");
     X509Certificate sCert =
       KeyStoreTestUtil.generateCertificate("CN=localhost, O=server", sKP, 30,
-                                           "SHA256withRSA");
+                                           "SHA256withDSA");
     KeyStoreTestUtil.createKeyStore(serverKS, serverPassword, "server",
                                     sKP.getPrivate(), sCert);
     certs.put("server", sCert);
@@ -297,8 +297,8 @@ public final class KeyStoreTestUtil {
     conf.set(SSLFactory.SSL_HOSTNAME_VERIFIER_KEY, "ALLOW_ALL");
 
 
-    conf.set(SSLFactory.SSL_CLIENT_CONF_KEY, "file://" + sslClientConfFile.getAbsolutePath());
-    conf.set(SSLFactory.SSL_SERVER_CONF_KEY, "file://" + sslServerConfFile.getAbsolutePath());
+    conf.set("hadoop.ssl.client.conf", "file://" + sslClientConfFile.getAbsolutePath());
+    conf.set("hadoop.ssl.server.conf", "file://" + sslServerConfFile.getAbsolutePath());
     conf.setBoolean(SSLFactory.SSL_REQUIRE_CLIENT_CERT_KEY, useClientCert);
   }
 
