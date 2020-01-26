@@ -27,19 +27,29 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.testclassification.MiscTests;
+import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import org.apache.hbase.thirdparty.org.apache.commons.cli.CommandLine;
 import org.apache.hbase.thirdparty.org.apache.commons.cli.Option;
+import org.junit.experimental.categories.Category;
 
+@Category({ MiscTests.class, SmallTests.class })
 public class AbstractHBaseToolTest {
   static final class Options {
     static final Option REQUIRED = new Option(null, "required", true, "");
     static final Option OPTIONAL = new Option(null, "optional", true, "");
     static final Option BOOLEAN = new Option(null, "boolean", false, "");
   }
+
+  @ClassRule
+  public static final HBaseClassTestRule CLASS_RULE =
+    HBaseClassTestRule.forClass(AbstractHBaseToolTest.class);
 
   /**
    * Simple tool to test options parsing.

@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
-<project xmlns="https://maven.apache.org/POM/4.0.0" xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="https://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="https://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd
+https://www.w3.org/2001/XMLSchema-instance ">
   <!--
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -62,17 +64,21 @@
               <attachToTest>false</attachToTest>
               <properties>
                 <copyright-end-year>${build.year}</copyright-end-year>
-                <debug-print-included-work-info>${license.debug.print.included}</debug-print-included-work-info>
+                <debug-print-included-work-info>${license.debug.print.included}
+                </debug-print-included-work-info>
                 <bundled-dependencies>${license.bundles.dependencies}</bundled-dependencies>
                 <bundled-jquery>${license.bundles.jquery}</bundled-jquery>
                 <bundled-logo>${license.bundles.logo}</bundled-logo>
                 <bundled-bootstrap>${license.bundles.bootstrap}</bundled-bootstrap>
               </properties>
               <resourceBundles>
-                <resourceBundle>${project.groupId}:hbase-resource-bundle:${project.version}</resourceBundle>
+                <resourceBundle>${project.groupId}:hbase-resource-bundle:${project.version}
+                </resourceBundle>
               </resourceBundles>
               <supplementalModelArtifacts>
-                <supplementalModelArtifact>${project.groupId}:hbase-resource-bundle:${project.version}</supplementalModelArtifact>
+                <supplementalModelArtifact>
+                  ${project.groupId}:hbase-resource-bundle:${project.version}
+                </supplementalModelArtifact>
               </supplementalModelArtifacts>
               <supplementalModels>
                 <supplementalModel>supplemental-models.xml</supplementalModel>
@@ -227,6 +233,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <scope>test</scope>
+      <version>1.64</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.kerby</groupId>
       <artifactId>kerb-core</artifactId>
       <scope>test</scope>
@@ -316,8 +328,9 @@
       <id>hadoop-2.0</id>
       <activation>
         <property>
-            <!--Below formatting for dev-support/generate-hadoopX-poms.sh-->
-            <!--h2--><name>!hadoop.profile</name>
+          <!--Below formatting for dev-support/generate-hadoopX-poms.sh-->
+          <!--h2-->
+          <name>!hadoop.profile</name>
         </property>
       </activation>
       <dependencies>
@@ -366,7 +379,8 @@
                   the required classpath that is required in the env
                   of the launch container in the mini mr/yarn cluster
                   -->
-                  <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath</outputFile>
+                  <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath
+                  </outputFile>
                 </configuration>
               </execution>
             </executions>
@@ -423,7 +437,8 @@
                   the required classpath that is required in the env
                   of the launch container in the mini mr/yarn cluster
                   -->
-                  <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath</outputFile>
+                  <outputFile>${project.build.directory}/test-classes/mrapp-generated-classpath
+                  </outputFile>
                 </configuration>
               </execution>
             </executions>
@@ -440,8 +455,8 @@
       </activation>
       <build>
         <pluginManagement>
-           <plugins>
-             <!--This plugin's configuration is used to store Eclipse m2e settings
+          <plugins>
+            <!--This plugin's configuration is used to store Eclipse m2e settings
                  only. It has no influence on the Maven build itself and needs to
                  be kept in plugin management, not in the actual plugins. -->
             <plugin>

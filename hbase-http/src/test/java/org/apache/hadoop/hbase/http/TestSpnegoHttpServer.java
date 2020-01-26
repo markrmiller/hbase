@@ -28,8 +28,11 @@ import javax.security.auth.Subject;
 import javax.security.auth.kerberos.KerberosTicket;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
+import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
 import org.apache.hadoop.hbase.http.TestHttpServer.EchoServlet;
+import org.apache.hadoop.hbase.http.log.TestLogLevel;
 import org.apache.hadoop.hbase.http.resource.JerseyResource;
+import org.apache.hadoop.hbase.http.ssl.KeyStoreTestUtil;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -77,6 +80,11 @@ public class TestSpnegoHttpServer extends HttpServerFunctionalTest {
   private static final String KDC_SERVER_HOST = "localhost";
   private static final String CLIENT_PRINCIPAL = "client";
 
+  private static File BASEDIR = new File(System.getProperty("test.build.dir",
+    "target/test-dir") + "/" + TestSSLHttpServer.class.getSimpleName());
+
+  private static HBaseCommonTestingUtility htu = new HBaseCommonTestingUtility();
+
   private static HttpServer server;
   private static URL baseUrl;
   private static SimpleKdcServer kdc;
@@ -86,14 +94,14 @@ public class TestSpnegoHttpServer extends HttpServerFunctionalTest {
   @BeforeClass
   public static void setupServer() throws Exception {
     final String serverPrincipal = "HTTP/" + KDC_SERVER_HOST;
-    final File target = new File(System.getProperty("user.dir"), "target");
-    assertTrue(target.exists());
+
+    BASEDIR = new File( KeyStoreTestUtil.getClasspathDir(TestLogLevel.class) + "/test-dir/" + htu.getRandomDir());
+
 
     kdc = buildMiniKdc();
     kdc.start();
 
-    File keytabDir = new File(target, TestSpnegoHttpServer.class.getSimpleName()
-        + "_keytabs");
+    File keytabDir = new File(BASEDIR, "kdc");
     if (keytabDir.exists()) {
       deleteRecursively(keytabDir);
     }
@@ -143,8 +151,7 @@ public class TestSpnegoHttpServer extends HttpServerFunctionalTest {
   private static SimpleKdcServer buildMiniKdc() throws Exception {
     SimpleKdcServer kdc = new SimpleKdcServer();
 
-    final File target = new File(System.getProperty("user.dir"), "target");
-    File kdcDir = new File(target, TestSpnegoHttpServer.class.getSimpleName());
+    File kdcDir = new File(BASEDIR, TestSpnegoHttpServer.class.getSimpleName());
     if (kdcDir.exists()) {
       deleteRecursively(kdcDir);
     }

@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.http;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -146,6 +147,7 @@ public class HttpServer implements FilterContainer {
   protected final Server webServer;
   protected String appDir;
   protected String logDir;
+  //private final File dataDir;
 
   private static final class ListenerInfo {
     /**
@@ -206,6 +208,8 @@ public class HttpServer implements FilterContainer {
     private String kerberosNameRulesKey;
     private String signatureSecretFileKey;
 
+    private File dataDir;
+
     /**
      * @see #setAppDir(String)
      * @deprecated Since 0.99.0. Use builder pattern via {@link #setAppDir(String)} instead.
@@ -258,6 +262,8 @@ public class HttpServer implements FilterContainer {
     }
 
     public Builder keyStore(String location, String password, String type) {
+      LOG.info("Setting key store to {} {} {}", location, password, type);
+
       this.keyStore = location;
       this.keyStorePassword = password;
       this.keyStoreType = type;
@@ -363,7 +369,17 @@ public class HttpServer implements FilterContainer {
       return this;
     }
 
+    public Builder setDataDir(File dataDir) {
+      this.dataDir = dataDir;
+      return this;
+    }
+
     public HttpServer build() throws IOException {
+    //  String basePath = "";
+
+      if (dataDir != null) {
+      //  basePath = dataDir.getAbsolutePath() + "/";
+      }
 
       // Do we still need to assert this non null name if it is deprecated?
       if (this.name == null) {
@@ -395,7 +411,7 @@ public class HttpServer implements FilterContainer {
 
       if (this.securityEnabled) {
         server.initSpnego(conf, hostName, usernameConfKey, keytabConfKey, kerberosNameRulesKey,
-            signatureSecretFileKey);
+          signatureSecretFileKey);
       }
 
       for (URI ep : endpoints) {
@@ -416,20 +432,26 @@ public class HttpServer implements FilterContainer {
           sslCtxFactory.setNeedClientAuth(needsClientAuth);
           sslCtxFactory.setKeyManagerPassword(keyPassword);
 
+          LOG.info("set keystore and trust {} {}", keyStore, trustStore);
           if (keyStore != null) {
+            LOG.info("starting server with keystore {}", keyStore);
             sslCtxFactory.setKeyStorePath(keyStore);
             sslCtxFactory.setKeyStoreType(keyStoreType);
             sslCtxFactory.setKeyStorePassword(keyStorePassword);
           }
 
           if (trustStore != null) {
+            LOG.info("starting server with truststore {}", trustStore);
             sslCtxFactory.setTrustStorePath(trustStore);
             sslCtxFactory.setTrustStoreType(trustStoreType);
             sslCtxFactory.setTrustStorePassword(trustStorePassword);
 
           }
+          sslCtxFactory.setValidateCerts(false);
+
           listener = new ServerConnector(server.webServer, new SslConnectionFactory(sslCtxFactory,
               HttpVersion.HTTP_1_1.toString()), new HttpConnectionFactory(httpsConfig));
+
         } else {
           throw new HadoopIllegalArgumentException(
               "unknown scheme for endpoint:" + ep);
@@ -552,6 +574,8 @@ public class HttpServer implements FilterContainer {
   private HttpServer(final Builder b) throws IOException {
     this.appDir = b.appDir;
     this.logDir = b.logDir;
+   // this.dataDir = b.dataDir;
+
     final String appDir = getWebAppsPath(b.name);
 
 

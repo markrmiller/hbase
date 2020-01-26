@@ -74,7 +74,7 @@ rootTestClassDirectory="./src/test/java/"
 surefireReportDirectory="./target/surefire-reports/"
 
 #variable to use to debug the script without launching the tests
-mvnCommand="mvn "
+mvnCommand="mvn -Djava.io.tmpdir=/tmp"
 #mvnCommand="echo $mvnCommand"
 
 ######################################### Functions

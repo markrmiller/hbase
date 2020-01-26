@@ -177,8 +177,8 @@ public class TestHBaseTestingUtility {
     KeyStoreTestUtil.setupSSLConfig(keystoresDir, sslConfDir, hbt.getConfiguration(), false);
 
     hbt.getConfiguration().set("hbase.ssl.enabled", "true");
-    hbt.getConfiguration().addResource("ssl-server.xml");
-    hbt.getConfiguration().addResource("ssl-client.xml");
+    hbt.getConfiguration().addResource(BASEDIR + "/ssl-server.xml");
+    hbt.getConfiguration().addResource(BASEDIR + "/ssl-client.xml");
 
     MiniHBaseCluster cluster = hbt.startMiniCluster();
     try {

@@ -1343,8 +1343,8 @@
     <joni.version>2.1.11</joni.version>
     <jcodings.version>1.0.18</jcodings.version>
     <spy.version>2.12.2</spy.version>
-    <bouncycastle.version>1.60</bouncycastle.version>
-    <kerby.version>1.0.1</kerby.version>
+    <bouncycastle.version>1.64</bouncycastle.version>
+    <kerby.version>1.1.1</kerby.version>
     <commons-crypto.version>1.0.0</commons-crypto.version>
     <curator.version>4.2.0</curator.version>
     <!-- Plugin Dependencies -->
@@ -1400,7 +1400,7 @@
     <surefire.cygwinXmx>2800m</surefire.cygwinXmx>
     <!--Mark our test runs with '-Dhbase.build.id' so we can identify a surefire test as ours in a process listing
      -->
-    <hbase-surefire.argLine>-enableassertions -Dhbase.build.id=${build.id} -Xmx${surefire.Xmx}
+    <hbase-surefire.argLine>-enableassertions -Dsun.security.krb5.debug=true -Dsun.security.spnego.debug=true -Dsun.security.jgss.debug=true -Dsun.security.jgss.debug=true -Djava.security.debug=true --add-opens=java.base/jdk.internal.ref=ALL-UNNAMED -Dhbase.build.id=${build.id} -Xmx${surefire.Xmx}
       -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true
       -Djava.awt.headless=true -Djdk.net.URLClassPath.disableClassPathURLCheck=true
       -Dorg.apache.hbase.thirdparty.io.netty.leakDetection.level=advanced
@@ -2026,6 +2026,12 @@
       <dependency>
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcprov-jdk15on</artifactId>
+        <version>${bouncycastle.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcprov-bcpkix</artifactId>
         <version>${bouncycastle.version}</version>
         <scope>test</scope>
       </dependency>

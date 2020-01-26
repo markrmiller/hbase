@@ -24,10 +24,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.BindException;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
+import java.util.Locale;
 import java.util.Properties;
 import javax.net.ssl.SSLException;
 
@@ -41,6 +44,7 @@ import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
 import org.apache.hadoop.hbase.http.HttpConfig;
 import org.apache.hadoop.hbase.http.HttpServer;
+import org.apache.hadoop.hbase.http.TestSSLHttpServer;
 import org.apache.hadoop.hbase.http.log.LogLevel.CLI;
 import org.apache.hadoop.hbase.http.ssl.KeyStoreTestUtil;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
@@ -53,6 +57,8 @@ import org.apache.hadoop.security.authorize.AccessControlList;
 import org.apache.hadoop.security.ssl.SSLFactory;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.kerby.kerberos.kerb.KrbException;
+import org.apache.kerby.kerberos.kerb.server.SimpleKdcServer;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -62,6 +68,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test LogLevel.
@@ -72,54 +79,64 @@ public class TestLogLevel {
   public static final HBaseClassTestRule CLASS_RULE =
       HBaseClassTestRule.forClass(TestLogLevel.class);
 
-  private static File BASEDIR;
-  private static String keystoresDir;
-  private static String sslConfDir;
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestLogLevel.class);
+
+  private static final String KDC_SERVER_HOST = "localhost";
+  private static String BASEDIR ;
   private static Configuration serverConf;
   private static Configuration clientConf;
   private static Configuration sslConf;
   private static final String logName = TestLogLevel.class.getName();
-  private static final Logger log = LogManager.getLogger(logName);
+  private final Logger log = LogManager.getLogger(logName);
   private final static String PRINCIPAL = "loglevel.principal";
   private final static String KEYTAB  = "loglevel.keytab";
 
-  private static MiniKdc kdc;
-  private static HBaseCommonTestingUtility htu = new HBaseCommonTestingUtility();
+  private static SimpleKdcServer kdc;
 
   private static final String LOCALHOST = "localhost";
   private static final String clientPrincipal = "client/" + LOCALHOST;
   private static String HTTP_PRINCIPAL = "HTTP/" + LOCALHOST;
 
-  private static final File KEYTAB_FILE = new File(
-      htu.getDataTestDir("keytab").toUri().getPath());
+  private static File KEYTAB_FILE;
 
   @BeforeClass
   public static void setUp() throws Exception {
-    BASEDIR = new File(htu.getDataTestDir().toUri().getPath());
 
-    FileUtil.fullyDelete(BASEDIR);
-    if (!BASEDIR.mkdirs()) {
-      throw new Exception("unable to create the base directory for testing");
-    }
     serverConf = new Configuration();
     clientConf = new Configuration();
+    HBaseCommonTestingUtility htu = new HBaseCommonTestingUtility(serverConf);
 
-    setupSSL(BASEDIR);
+    String classDir = KeyStoreTestUtil.getClasspathDir(TestLogLevel.class);
+
+    BASEDIR = classDir + "/test-dir/" + htu.getRandomUUID();
+
+    System.out.println("dir is:" + BASEDIR);
+
+
+    File base = new File(BASEDIR);
+    FileUtil.fullyDelete(base);
+    base.mkdirs();
+
+    KEYTAB_FILE = new File(BASEDIR,"keytab");
+
+    KEYTAB_FILE.getParentFile().mkdirs();
+
+    setupSSL(base, serverConf);
 
     kdc = setupMiniKdc();
     // Create two principles: a client and an HTTP principal
-    kdc.createPrincipal(KEYTAB_FILE, clientPrincipal, HTTP_PRINCIPAL);
+
   }
 
   /**
-   * Sets up {@link MiniKdc} for testing security.
+   * Sets up {@link SimpleKdcServer} for testing security.
    * Copied from HBaseTestingUtility#setupMiniKdc().
    */
-  static private MiniKdc setupMiniKdc() throws Exception {
+  static private SimpleKdcServer setupMiniKdc() throws Exception {
+    Logger log = LogManager.getLogger(logName);
     Properties conf = MiniKdc.createConf();
     conf.put(MiniKdc.DEBUG, true);
-    MiniKdc kdc = null;
-    File dir = null;
+    File kdcDir = null;
     // There is time lag between selecting a port and trying to bind with it. It's possible that
     // another service captures the port in between which'll result in BindException.
     boolean bindException;
@@ -127,11 +144,34 @@ public class TestLogLevel {
     do {
       try {
         bindException = false;
-        dir = new File(htu.getDataTestDir("kdc").toUri().getPath());
-        kdc = new MiniKdc(conf, dir);
+        kdcDir = new File(BASEDIR, "kdc");
+        kdc = new SimpleKdcServer();
+
+        if (kdcDir.exists()) {
+          deleteRecursively(kdcDir);
+        }
+        kdcDir.mkdirs();
+        kdc.setWorkDir(kdcDir);
+
+        kdc.setKdcHost(KDC_SERVER_HOST);
+        int kdcPort = getFreePort();
+        kdc.setAllowTcp(true);
+        kdc.setAllowUdp(false);
+        kdc.setKdcTcpPort(kdcPort);
+
+        LOG.info("Starting KDC server at " + KDC_SERVER_HOST + ":" + kdcPort);
+
+        kdc.getKdcConfig().setString("default_tkt_enctypes", "AES_128_GCM_SHA256 rsa_pkcs1_sha256 aes256-cts-hmac-sha1-96 des-cbc-md5 des-cbc-crc aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 camellia256-cts-cmac des-cbc-crc SSL_RSA_WITH_RC4_128_SHA ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp512r1_sha512 rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 dsa_sha256 ecdsa_sha224 rsa_sha224 dsa_sha224 ecdsa_sha1 rsa_pkcs1_sha1, dsa_sha1");
+        kdc.getKdcConfig().setString("default_tgs_enctypes", "AES_128_GCM_SHA256 rsa_pkcs1_sha256 aes256-cts-hmac-sha1-96 des-cbc-md5 des-cbc-crc aes128-cts-hmac-sha1-96 des3-cbc-sha1 arcfour-hmac-md5 camellia256-cts-cmac des-cbc-crc SSL_RSA_WITH_RC4_128_SHA ecdsa_secp256r1_sha256 ecdsa_secp384r1_sha384 ecdsa_secp512r1_sha512 rsa_pss_rsae_sha256, rsa_pss_rsae_sha384 rsa_pss_rsae_sha512 rsa_pss_pss_sha256 rsa_pss_pss_sha384 rsa_pss_pss_sha512 rsa_pkcs1_sha256 rsa_pkcs1_sha384 rsa_pkcs1_sha512 dsa_sha256 ecdsa_sha224 rsa_sha224 dsa_sha224 ecdsa_sha1 rsa_pkcs1_sha1, dsa_sha1");
+
+        kdc.init();
+
+        kdc.createAndExportPrincipals(KEYTAB_FILE, HTTP_PRINCIPAL, clientPrincipal);
+
+
         kdc.start();
       } catch (BindException e) {
-        FileUtils.deleteDirectory(dir);  // clean directory
+       // FileUtils.deleteDirectory(kdcDir);  // clean directory
         numTries++;
         if (numTries == 3) {
           log.error("Failed setting up MiniKDC. Tried " + numTries + " times.");
@@ -144,17 +184,17 @@ public class TestLogLevel {
     return kdc;
   }
 
-  static private void setupSSL(File base) throws Exception {
-    Configuration conf = new Configuration();
+  static private void setupSSL(File base, Configuration conf) throws Exception {
     conf.set(DFSConfigKeys.DFS_HTTP_POLICY_KEY, HttpConfig.Policy.HTTPS_ONLY.name());
     conf.set(DFSConfigKeys.DFS_NAMENODE_HTTPS_ADDRESS_KEY, "localhost:0");
     conf.set(DFSConfigKeys.DFS_DATANODE_HTTPS_ADDRESS_KEY, "localhost:0");
 
-    keystoresDir = base.getAbsolutePath();
-    sslConfDir = KeyStoreTestUtil.getClasspathDir(TestLogLevel.class);
-    KeyStoreTestUtil.setupSSLConfig(keystoresDir, sslConfDir, conf, false);
 
-    sslConf = getSslConfig();
+    KeyStoreTestUtil.setupSSLConfig(base.getAbsolutePath(), base.getAbsolutePath(), conf, false);
+
+    sslConf = getSslConfig(conf);
+    System.out.println("conf: " + conf.getFinalParameters());
+    System.out.println("ssl conf: " + sslConf.getFinalParameters());
   }
 
   /**
@@ -162,24 +202,23 @@ public class TestLogLevel {
    * This method is copied from KeyStoreTestUtil#getSslConfig() in Hadoop.
    * @return {@link Configuration} instance with ssl configs loaded.
    */
-  private static Configuration getSslConfig(){
-    Configuration sslConf = new Configuration(false);
-    String sslServerConfFile = "ssl-server.xml";
-    String sslClientConfFile = "ssl-client.xml";
+  private static Configuration getSslConfig(Configuration sslConf ){
+    String sslServerConfFile = BASEDIR + "/ssl-server.xml";
+    String sslClientConfFile = BASEDIR + "/ssl-client.xml";
     sslConf.addResource(sslServerConfFile);
     sslConf.addResource(sslClientConfFile);
-    sslConf.set(SSLFactory.SSL_SERVER_CONF_KEY, sslServerConfFile);
-    sslConf.set(SSLFactory.SSL_CLIENT_CONF_KEY, sslClientConfFile);
+    sslConf.set(SSLFactory.SSL_SERVER_CONF_KEY, "ssl-server.xml");
+    sslConf.set(SSLFactory.SSL_CLIENT_CONF_KEY, "ssl-client.xml");
     return sslConf;
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws KrbException {
     if (kdc != null) {
       kdc.stop();
     }
 
-    FileUtil.fullyDelete(BASEDIR);
+  //  FileUtil.fullyDelete(BASEDIR);
   }
 
   /**
@@ -273,7 +312,6 @@ public class TestLogLevel {
               sslConf.get("ssl.server.truststore.password"),
               sslConf.get("ssl.server.truststore.type", "jks"));
     }
-
     HttpServer server = builder.build();
     server.start();
     return server;
@@ -483,9 +521,10 @@ public class TestLogLevel {
    * t.getCause() directly, similar to HADOOP-15280.
    */
   private static void exceptionShouldContains(String substr, Throwable throwable) {
+    substr = substr.toLowerCase(Locale.ROOT);
     Throwable t = throwable;
     while (t != null) {
-      String msg = t.toString();
+      String msg = t.toString().toLowerCase(Locale.ROOT);
       if (msg != null && msg.contains(substr)) {
         return;
       }
@@ -493,5 +532,35 @@ public class TestLogLevel {
     }
     throw new AssertionError("Expected to find '" + substr + "' but got unexpected exception:" +
         StringUtils.stringifyException(throwable), throwable);
+  }
+
+  /**
+   * Recursively deletes a {@link File}.
+   */
+  protected static void deleteRecursively(File d) {
+    if (d.isDirectory()) {
+      for (String name : d.list()) {
+        File child = new File(d, name);
+        if (child.isFile()) {
+          child.delete();
+        } else {
+          deleteRecursively(child);
+        }
+      }
+    }
+    d.delete();
+  }
+
+  protected static int getFreePort() throws IOException {
+    ServerSocket s = new ServerSocket(0);
+    try {
+      s.setReuseAddress(true);
+      int port = s.getLocalPort();
+      return port;
+    } finally {
+      if (null != s) {
+        s.close();
+      }
+    }
   }
 }

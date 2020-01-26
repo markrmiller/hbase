@@ -37,19 +37,40 @@ import java.security.SecureRandom;
 import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.security.auth.x500.X500Principal;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.http.TestSSLHttpServer;
 import org.apache.hadoop.security.ssl.FileBasedKeyStoresFactory;
 import org.apache.hadoop.security.ssl.SSLFactory;
-import org.bouncycastle.x509.X509V1CertificateGenerator;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v1CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.util.PrivateKeyFactory;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class KeyStoreTestUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(KeyStoreTestUtil.class);
+
   private KeyStoreTestUtil() {
   }
 
@@ -79,18 +100,49 @@ public final class KeyStoreTestUtil {
     Date to = new Date(from.getTime() + days * 86400000L);
     BigInteger sn = new BigInteger(64, new SecureRandom());
     KeyPair keyPair = pair;
-    X509V1CertificateGenerator certGen = new X509V1CertificateGenerator();
+    X500Name name = new X500Name(dn);
+
     X500Principal  dnName = new X500Principal(dn);
 
-    certGen.setSerialNumber(sn);
-    certGen.setIssuerDN(dnName);
-    certGen.setNotBefore(from);
-    certGen.setNotAfter(to);
-    certGen.setSubjectDN(dnName);
-    certGen.setPublicKey(keyPair.getPublic());
-    certGen.setSignatureAlgorithm(algorithm);
-    X509Certificate cert = certGen.generate(pair.getPrivate());
-    return cert;
+    AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find(algorithm);
+    AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
+    AsymmetricKeyParameter privateKeyAsymKeyParam = null;
+    try {
+      privateKeyAsymKeyParam = PrivateKeyFactory.createKey(pair.getPrivate().getEncoded());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    SubjectPublicKeyInfo subPubKeyInfo = SubjectPublicKeyInfo.getInstance(pair.getPublic().getEncoded());
+    ContentSigner sigGen = null;
+    try {
+        sigGen = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(privateKeyAsymKeyParam);
+    } catch (OperatorCreationException e) {
+      e.printStackTrace();
+    }
+    //  X500Name name = new X500Name(dn);
+
+    X509v1CertificateBuilder certGen = new X509v1CertificateBuilder(name, sn, from, to, name, subPubKeyInfo);
+
+//    certGen.setSerialNumber(sn);
+//    certGen.setIssuerDN(dnName);
+//    certGen.setNotBefore(from);
+//    certGen.setNotAfter(to);
+//    certGen.setSubjectDN(dnName);
+//    certGen.setPublicKey(keyPair.getPublic());
+//    certGen.setSignatureAlgorithm(algorithm);
+
+//    Iterator it = certGen.getSignatureAlgNames();
+//    while(it.hasNext()) {
+//      System.out.println("alg: " + it.next());
+//    }
+
+    X509CertificateHolder certificateHolder = certGen.build(sigGen);
+
+    try {
+      return new JcaX509CertificateConverter().setProvider(new BouncyCastleProvider()).getCertificate(certificateHolder);
+    } catch (CertificateException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static KeyPair generateKeyPair(String algorithm)
@@ -209,13 +261,16 @@ public final class KeyStoreTestUtil {
     File sslClientConfFile = new File(sslConfDir + "/ssl-client.xml");
     File sslServerConfFile = new File(sslConfDir + "/ssl-server.xml");
 
+    LOG.info("sslClientConfFile: " + sslClientConfFile);
+    LOG.info("sslServerConfFile: " + sslServerConfFile);
+
     Map<String, X509Certificate> certs = new HashMap<>();
 
     if (useClientCert) {
       KeyPair cKP = KeyStoreTestUtil.generateKeyPair("RSA");
       X509Certificate cCert =
         KeyStoreTestUtil.generateCertificate("CN=localhost, O=client", cKP, 30,
-                                             "SHA1withRSA");
+                                             "SHA256withRSA");
       KeyStoreTestUtil.createKeyStore(clientKS, clientPassword, "client",
                                       cKP.getPrivate(), cCert);
       certs.put("client", cCert);
@@ -224,7 +279,7 @@ public final class KeyStoreTestUtil {
     KeyPair sKP = KeyStoreTestUtil.generateKeyPair("RSA");
     X509Certificate sCert =
       KeyStoreTestUtil.generateCertificate("CN=localhost, O=server", sKP, 30,
-                                           "SHA1withRSA");
+                                           "SHA256withRSA");
     KeyStoreTestUtil.createKeyStore(serverKS, serverPassword, "server",
                                     sKP.getPrivate(), sCert);
     certs.put("server", sCert);
@@ -240,8 +295,10 @@ public final class KeyStoreTestUtil {
     saveConfig(sslServerConfFile, serverSSLConf);
 
     conf.set(SSLFactory.SSL_HOSTNAME_VERIFIER_KEY, "ALLOW_ALL");
-    conf.set(SSLFactory.SSL_CLIENT_CONF_KEY, sslClientConfFile.getName());
-    conf.set(SSLFactory.SSL_SERVER_CONF_KEY, sslServerConfFile.getName());
+
+
+    conf.set(SSLFactory.SSL_CLIENT_CONF_KEY, "file://" + sslClientConfFile.getAbsolutePath());
+    conf.set(SSLFactory.SSL_SERVER_CONF_KEY, "file://" + sslServerConfFile.getAbsolutePath());
     conf.setBoolean(SSLFactory.SSL_REQUIRE_CLIENT_CERT_KEY, useClientCert);
   }
 
@@ -298,6 +355,11 @@ public final class KeyStoreTestUtil {
     String trustPassword = "trustP";
 
     Configuration sslConf = new Configuration(false);
+    try {
+      sslConf.set("hadoop.home.dir", KeyStoreTestUtil.getClasspathDir(KeyStoreTestUtil.class));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
     if (keystore != null) {
       sslConf.set(FileBasedKeyStoresFactory.resolvePropertyName(mode,
         FileBasedKeyStoresFactory.SSL_KEYSTORE_LOCATION_TPL_KEY), keystore);
