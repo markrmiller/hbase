@@ -69,7 +69,7 @@ public class TestFutureUtils {
     } catch (HBaseIOException e) {
       assertEquals("Inject error!", e.getMessage());
       StackTraceElement[] elements = e.getStackTrace();
-      assertThat(elements[0].toString(), startsWith("java.lang.Thread.getStackTrace"));
+      assertTrue(elements[0].toString(),elements[0].toString().matches("(?:java.base/)?java\\.lang\\.Thread\\.getStackTrace.*"));
       assertThat(elements[1].toString(),
         startsWith("org.apache.hadoop.hbase.util.FutureUtils.setStackTrace"));
       assertThat(elements[2].toString(),

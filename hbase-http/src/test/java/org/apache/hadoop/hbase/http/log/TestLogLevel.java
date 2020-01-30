@@ -28,6 +28,7 @@ import java.net.BindException;
 import java.net.SocketException;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
+import java.util.Locale;
 import java.util.Properties;
 import javax.net.ssl.SSLException;
 
@@ -41,6 +42,7 @@ import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
 import org.apache.hadoop.hbase.http.HttpConfig;
 import org.apache.hadoop.hbase.http.HttpServer;
+import org.apache.hadoop.hbase.http.TestSSLHttpServer;
 import org.apache.hadoop.hbase.http.log.LogLevel.CLI;
 import org.apache.hadoop.hbase.http.ssl.KeyStoreTestUtil;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
@@ -116,6 +118,7 @@ public class TestLogLevel {
    * Copied from HBaseTestingUtility#setupMiniKdc().
    */
   static private MiniKdc setupMiniKdc() throws Exception {
+    Logger log = LogManager.getLogger(logName);
     Properties conf = MiniKdc.createConf();
     conf.put(MiniKdc.DEBUG, true);
     MiniKdc kdc = null;
@@ -483,15 +486,16 @@ public class TestLogLevel {
    * t.getCause() directly, similar to HADOOP-15280.
    */
   private static void exceptionShouldContains(String substr, Throwable throwable) {
+    substr = substr.toLowerCase(Locale.ROOT);
     Throwable t = throwable;
     while (t != null) {
-      String msg = t.toString();
+      String msg = t.toString().toLowerCase(Locale.ROOT);
       if (msg != null && msg.contains(substr)) {
         return;
       }
       t = t.getCause();
     }
     throw new AssertionError("Expected to find '" + substr + "' but got unexpected exception:" +
-        StringUtils.stringifyException(throwable), throwable);
+      StringUtils.stringifyException(throwable), throwable);
   }
 }
