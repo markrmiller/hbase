@@ -23,10 +23,13 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import java.io.File;
+import java.io.IOException;
 import java.net.BindException;
+import java.net.ServerSocket;
 import java.net.SocketException;
 import java.net.URI;
 import java.security.PrivilegedExceptionAction;
+import java.util.Locale;
 import java.util.Properties;
 import javax.net.ssl.SSLException;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +54,8 @@ import org.apache.hadoop.security.authorize.AccessControlList;
 import org.apache.hadoop.security.ssl.SSLFactory;
 import org.apache.hadoop.test.GenericTestUtils;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.kerby.kerberos.kerb.KrbException;
+import org.apache.kerby.kerberos.kerb.server.SimpleKdcServer;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -59,32 +64,39 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test LogLevel.
  */
 @Category({MiscTests.class, SmallTests.class})
 public class TestLogLevel {
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestLogLevel.class);
+
   @ClassRule
   public static final HBaseClassTestRule CLASS_RULE =
       HBaseClassTestRule.forClass(TestLogLevel.class);
 
+  private static final String KDC_SERVER_HOST = "127.0.0.1";
   private static String keystoresDir;
   private static String sslConfDir;
   private static Configuration serverConf;
   private static Configuration clientConf;
   private static Configuration sslConf;
   private static final String logName = TestLogLevel.class.getName();
-  private static final Logger log = LogManager.getLogger(logName);
+  private static String BASEDIR;
+  private static HBaseCommonTestingUtility HTU;
+  // instance logger to avoid conflicts
+  private final Logger INSTANCE_LOGGER = LogManager.getLogger(logName);
   private final static String PRINCIPAL = "loglevel.principal";
   private final static String KEYTAB  = "loglevel.keytab";
 
-  private static MiniKdc kdc;
+  private static SimpleKdcServer kdc;
 
   private static final String LOCALHOST = "localhost";
-  private static final String clientPrincipal = "client/" + LOCALHOST;
+  private static final String CLIENT_PRINCIPAL = "client/" + LOCALHOST;
   private static String HTTP_PRINCIPAL = "HTTP/" + LOCALHOST;
-  private static HBaseCommonTestingUtility HTU;
+
   private static File keyTabFile;
 
   @BeforeClass
@@ -99,21 +111,18 @@ public class TestLogLevel {
     clientConf = new Configuration();
 
     setupSSL(keystoreDir);
-
     kdc = setupMiniKdc();
-    // Create two principles: a client and an HTTP principal
-    kdc.createPrincipal(keyTabFile, clientPrincipal, HTTP_PRINCIPAL);
   }
 
   /**
-   * Sets up {@link MiniKdc} for testing security.
+   * Sets up {@link SimpleKdcServer} for testing security.
    * Copied from HBaseTestingUtility#setupMiniKdc().
    */
-  static private MiniKdc setupMiniKdc() throws Exception {
+  static private SimpleKdcServer setupMiniKdc() throws Exception {
+    Logger log = LogManager.getLogger(logName);
     Properties conf = MiniKdc.createConf();
     conf.put(MiniKdc.DEBUG, true);
-    MiniKdc kdc = null;
-    File dir = null;
+    File kdcDir = null;
     // There is time lag between selecting a port and trying to bind with it. It's possible that
     // another service captures the port in between which'll result in BindException.
     boolean bindException;
@@ -121,11 +130,32 @@ public class TestLogLevel {
     do {
       try {
         bindException = false;
-        dir = new File(HTU.getDataTestDir("kdc").toUri().getPath());
-        kdc = new MiniKdc(conf, dir);
+        kdcDir = new File(BASEDIR, "kdc");
+        kdc = new SimpleKdcServer();
+        kdc.enableDebug();
+
+        if (kdcDir.exists()) {
+          deleteRecursively(kdcDir);
+        }
+        kdcDir.mkdirs();
+        kdc.setWorkDir(kdcDir);
+
+        kdc.setKdcHost(KDC_SERVER_HOST);
+        int kdcPort = getFreePort();
+        kdc.setAllowTcp(true);
+        kdc.setAllowUdp(false);
+        kdc.setKdcTcpPort(kdcPort);
+
+        LOG.info("Starting KDC server at " + KDC_SERVER_HOST + ":" + kdcPort);
+
+        kdc.init();
+
+        kdc.createAndExportPrincipals(keyTabFile, HTTP_PRINCIPAL, CLIENT_PRINCIPAL);
+
+
         kdc.start();
       } catch (BindException e) {
-        FileUtils.deleteDirectory(dir);  // clean directory
+        FileUtils.deleteDirectory(kdcDir);  // clean directory
         numTries++;
         if (numTries == 3) {
           log.error("Failed setting up MiniKDC. Tried " + numTries + " times.");
@@ -156,7 +186,7 @@ public class TestLogLevel {
    * @return {@link Configuration} instance with ssl configs loaded.
    * @param conf to pull client/server SSL settings filename from
    */
-  private static Configuration getSslConfig(Configuration conf){
+  private static Configuration getSslConfig(Configuration conf) {
     Configuration sslConf = new Configuration(false);
     String sslServerConfFile = conf.get(SSLFactory.SSL_SERVER_CONF_KEY);
     String sslClientConfFile =  conf.get(SSLFactory.SSL_CLIENT_CONF_KEY);
@@ -168,7 +198,7 @@ public class TestLogLevel {
   }
 
   @AfterClass
-  public static void tearDown() {
+  public static void tearDown() throws KrbException {
     if (kdc != null) {
       kdc.stop();
     }
@@ -207,8 +237,8 @@ public class TestLogLevel {
     assertFalse(validateCommand(
         new String[] {"-setlevel", "foo.bar:8080", className, "DEBUG", "blah" }));
     assertFalse(validateCommand(
-        new String[] {"-getlevel", "foo.bar:8080", className, "-setlevel", "foo.bar:8080",
-          className }));
+        new String[] { "-getlevel", "foo.bar:8080", className, "-setlevel", "foo.bar:8080",
+                       className }));
   }
 
   /**
@@ -296,7 +326,7 @@ public class TestLogLevel {
     if (!LogLevel.isValidProtocol(connectProtocol)) {
       throw new Exception("Invalid client protocol " + connectProtocol);
     }
-    Level oldLevel = log.getEffectiveLevel();
+    Level oldLevel = INSTANCE_LOGGER.getEffectiveLevel();
     assertNotEquals("Get default Log Level which shouldn't be ERROR.",
         Level.ERROR, oldLevel);
 
@@ -320,7 +350,7 @@ public class TestLogLevel {
     String keytabFilePath = keyTabFile.getAbsolutePath();
 
     UserGroupInformation clientUGI = UserGroupInformation.
-        loginUserFromKeytabAndReturnUGI(clientPrincipal, keytabFilePath);
+        loginUserFromKeytabAndReturnUGI(CLIENT_PRINCIPAL, keytabFilePath);
     try {
       clientUGI.doAs((PrivilegedExceptionAction<Void>) () -> {
         // client command line
@@ -334,7 +364,7 @@ public class TestLogLevel {
     }
 
     // restore log level
-    GenericTestUtils.setLogLevel(log, oldLevel);
+    GenericTestUtils.setLogLevel(INSTANCE_LOGGER, oldLevel);
   }
 
   /**
@@ -366,7 +396,7 @@ public class TestLogLevel {
     cli.run(setLevelArgs);
 
     assertEquals("new level not equal to expected: ", newLevel.toUpperCase(),
-        log.getEffectiveLevel().toString());
+        INSTANCE_LOGGER.getEffectiveLevel().toString());
   }
 
   /**
@@ -477,9 +507,10 @@ public class TestLogLevel {
    * t.getCause() directly, similar to HADOOP-15280.
    */
   private static void exceptionShouldContains(String substr, Throwable throwable) {
+    substr = substr.toLowerCase(Locale.ROOT);
     Throwable t = throwable;
     while (t != null) {
-      String msg = t.toString();
+      String msg = t.toString().toLowerCase(Locale.ROOT);
       if (msg != null && msg.contains(substr)) {
         return;
       }
@@ -487,5 +518,35 @@ public class TestLogLevel {
     }
     throw new AssertionError("Expected to find '" + substr + "' but got unexpected exception:" +
         StringUtils.stringifyException(throwable), throwable);
+  }
+
+  /**
+   * Recursively deletes a {@link File}.
+   */
+  protected static void deleteRecursively(File d) {
+    if (d.isDirectory()) {
+      for (String name : d.list()) {
+        File child = new File(d, name);
+        if (child.isFile()) {
+          child.delete();
+        } else {
+          deleteRecursively(child);
+        }
+      }
+    }
+    d.delete();
+  }
+
+  protected static int getFreePort() throws IOException {
+    ServerSocket s = new ServerSocket(0);
+    try {
+      s.setReuseAddress(true);
+      int port = s.getLocalPort();
+      return port;
+    } finally {
+      if (null != s) {
+        s.close();
+      }
+    }
   }
 }

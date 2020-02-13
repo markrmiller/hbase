@@ -47,8 +47,12 @@ import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
 import org.apache.hadoop.security.ssl.FileBasedKeyStoresFactory;
 import org.apache.hadoop.security.ssl.SSLFactory;
 import org.bouncycastle.x509.X509V1CertificateGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class KeyStoreTestUtil {
+  private static final Logger LOG = LoggerFactory.getLogger(KeyStoreTestUtil.class);
+
   private KeyStoreTestUtil() {
   }
 
@@ -95,7 +99,7 @@ public final class KeyStoreTestUtil {
   public static KeyPair generateKeyPair(String algorithm)
     throws NoSuchAlgorithmException {
     KeyPairGenerator keyGen = KeyPairGenerator.getInstance(algorithm);
-    keyGen.initialize(1024);
+    keyGen.initialize(2048);
     return keyGen.genKeyPair();
   }
 

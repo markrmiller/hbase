@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -37,7 +36,6 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-
 import org.apache.hbase.thirdparty.com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 @Category({ MiscTests.class, SmallTests.class })
@@ -69,7 +67,8 @@ public class TestFutureUtils {
     } catch (HBaseIOException e) {
       assertEquals("Inject error!", e.getMessage());
       StackTraceElement[] elements = e.getStackTrace();
-      assertThat(elements[0].toString(), startsWith("java.lang.Thread.getStackTrace"));
+      assertTrue(elements[0].toString(),elements[0].toString().matches(
+          "(?:java.base/)?java\\.lang\\.Thread\\.getStackTrace.*"));
       assertThat(elements[1].toString(),
         startsWith("org.apache.hadoop.hbase.util.FutureUtils.setStackTrace"));
       assertThat(elements[2].toString(),
