@@ -74,6 +74,8 @@ public class TestHRegionOnCluster {
     Admin hbaseAdmin = null;
     TEST_UTIL.startMiniCluster(NUM_RS);
 
+    TEST_UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(15000);
+
     try {
       final TableName tableName = TableName.valueOf(name.getMethodName());
       final byte[] FAMILY = Bytes.toBytes("family");
@@ -111,7 +113,7 @@ public class TestHRegionOnCluster {
       LOG.info("Moving " + regionInfo.getEncodedName() + " to " + targetServer.getServerName());
       hbaseAdmin.move(regionInfo.getEncodedNameAsBytes(), targetServer.getServerName());
       do {
-        Thread.sleep(1);
+        Thread.sleep(250);
       } while (cluster.getServerWith(regionInfo.getRegionName()) == originServerNum);
 
       // Put data: r2->v2
@@ -123,7 +125,7 @@ public class TestHRegionOnCluster {
       LOG.info("Moving " + regionInfo.getEncodedName() + " to " + originServer.getServerName());
       hbaseAdmin.move(regionInfo.getEncodedNameAsBytes(), originServer.getServerName());
       do {
-        Thread.sleep(1);
+        Thread.sleep(250);
       } while (cluster.getServerWith(regionInfo.getRegionName()) == targetServerNum);
 
       // Put data: r3->v3
@@ -136,11 +138,14 @@ public class TestHRegionOnCluster {
       cluster.getRegionServerThreads().get(targetServerNum).join();
       // Wait until finish processing of shutdown
       while (master.getServerManager().areDeadServersInProgress()) {
-        Thread.sleep(5);
+        Thread.sleep(250);
       }
       // Kill origin server
       LOG.info("Killing origin server " + targetServer.getServerName());
       originServer.kill();
+
+      TEST_UTIL.getHBaseCluster().waitForRegionServerToStop(originServer.getServerName(), 15000);
+
       cluster.getRegionServerThreads().get(originServerNum).join();
 
       // Put data: r4->v4
@@ -148,7 +153,9 @@ public class TestHRegionOnCluster {
       putDataAndVerify(table, "r4", FAMILY, "v4", 4);
 
     } finally {
-      if (hbaseAdmin != null) hbaseAdmin.close();
+      if (hbaseAdmin != null) {
+        hbaseAdmin.close();
+      }
       TEST_UTIL.shutdownMiniCluster();
     }
   }

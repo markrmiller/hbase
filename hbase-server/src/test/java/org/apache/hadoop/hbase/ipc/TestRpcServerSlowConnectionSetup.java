@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.hbase.ipc;
 
-import static org.apache.hadoop.hbase.ipc.TestProtobufRpcServiceImpl.SERVICE;
+import static org.apache.hadoop.hbase.ipc.ProtobufRpcServiceTestImpl.SERVICE;
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedInputStream;

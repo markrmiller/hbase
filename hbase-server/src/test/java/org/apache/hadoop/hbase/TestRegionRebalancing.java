@@ -154,8 +154,8 @@ public class TestRegionRebalancing {
       waitForAllRegionsAssigned();
       assert(UTIL.getHBaseCluster().getMaster().balance() == true);
       assertRegionsAreBalanced();
-      for (int i = 0; i < 6; i++){
-        LOG.info("Adding " + (i + 5) + "th region server");
+      for (int i = 0; i < 3; i++){
+        LOG.info("Adding " + (i + 2) + "th region server");
         UTIL.getHBaseCluster().startRegionServer();
       }
       waitForAllRegionsAssigned();

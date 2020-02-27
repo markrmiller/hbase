@@ -139,7 +139,7 @@ class SyncFuture {
       ExecutionException, TimeoutIOException {
     final long done = System.nanoTime() + timeoutNs;
     while (!isDone()) {
-      wait(1000);
+      wait(350);
       if (System.nanoTime() >= done) {
         throw new TimeoutIOException(
             "Failed to get sync result after " + TimeUnit.NANOSECONDS.toMillis(timeoutNs)

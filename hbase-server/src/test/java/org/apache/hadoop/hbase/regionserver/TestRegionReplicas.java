@@ -91,13 +91,15 @@ public class TestRegionReplicas {
     // when the file is moved to archive (e.g. compaction)
     HTU.getConfiguration().setInt(DFSConfigKeys.DFS_BLOCK_SIZE_KEY, 8192);
     HTU.getConfiguration().setInt(DFSConfigKeys.DFS_CLIENT_READ_PREFETCH_SIZE_KEY, 1);
-    HTU.getConfiguration().setInt(HConstants.HREGION_MEMSTORE_FLUSH_SIZE, 128 * 1024 * 1024);
+    HTU.getConfiguration().setInt(HConstants.HREGION_MEMSTORE_FLUSH_SIZE, 16 * 1024 * 1024);
 
     HTU.startMiniCluster(NB_SERVERS);
     final TableName tableName = TableName.valueOf(TestRegionReplicas.class.getSimpleName());
 
     // Create table then get the single region for our new table.
     table = HTU.createTable(tableName, f);
+
+    HTU.waitTableAvailable(tableName,15000L);
 
     try (RegionLocator locator = HTU.getConnection().getRegionLocator(tableName)) {
       hriPrimary = locator.getRegionLocation(row, false).getRegionInfo();
@@ -313,11 +315,16 @@ public class TestRegionReplicas {
   @Test
   public void testFlushAndCompactionsInPrimary() throws Exception {
 
-    long runtime = 30 * 1000;
+    long runtime = 15 * 1000;
     // enable store file refreshing
-    final int refreshPeriod = 100; // 100ms refresh is a lot
+    final int refreshPeriod = 350;
     HTU.getConfiguration().setInt("hbase.hstore.compactionThreshold", 3);
-    HTU.getConfiguration().setInt(StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD, refreshPeriod);
+    HTU.getConfiguration().setInt("hbase.hstore.blockingStoreFiles", 12);
+    HTU.getConfiguration().setInt("hbase.hregion.memstore.block.multiplier", 4);
+    HTU.getConfiguration().setInt("dfs.datanode.max.transfer.threads", 30);
+
+    HTU.getConfiguration().setInt(
+        StorefileRefresherChore.REGIONSERVER_STOREFILE_REFRESH_PERIOD, refreshPeriod);
     // restart the region server so that it starts the refresher chore
     restartRegionServer();
     final int startKey = 0, endKey = 1000;
@@ -349,7 +356,10 @@ public class TestRegionReplicas {
               put.addColumn(f, null, data);
               table.put(put);
               key++;
-              if (key == endKey) key = startKey;
+              if (key == endKey) {
+                key = startKey;
+              }
+              Thread.sleep(1000);
             }
           } catch (Exception ex) {
             LOG.warn(ex.toString(), ex);
@@ -370,6 +380,7 @@ public class TestRegionReplicas {
               } else {
                 HTU.compact(table.getName(), random.nextBoolean());
               }
+              Thread.sleep(1000);
             }
           } catch (Exception ex) {
             LOG.warn(ex.toString(), ex);
@@ -402,6 +413,7 @@ public class TestRegionReplicas {
 
               int key = random.nextInt(endKey - startKey) + startKey;
               assertGetRpc(hriSecondary, key, true);
+              Thread.sleep(1000);
             }
           } catch (Exception ex) {
             LOG.warn("Failed getting the value in the region " + hriSecondary + " "  + StringUtils.stringifyException(ex));

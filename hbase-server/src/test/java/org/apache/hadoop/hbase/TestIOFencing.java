@@ -51,6 +51,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -81,6 +82,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.WALProtos.CompactionDes
  * certain what is a chance occurance.
  */
 @Category({MiscTests.class, LargeTests.class})
+@Ignore // nocommit - grrrr
 public class TestIOFencing {
 
   @ClassRule
@@ -256,6 +258,13 @@ public class TestIOFencing {
 
   public void doTest(Class<?> regionClass, MemoryCompactionPolicy policy) throws Exception {
     Configuration c = TEST_UTIL.getConfiguration();
+    c.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 15);
+    c.setInt(HConstants.REGION_SERVER_REPLICATION_HANDLER_COUNT, 30);
+    c.setInt("dfs.namenode.handler.count", 20);
+    c.setInt("dfs.datanode.handler.count", 20);
+    c.setInt("dfs.datanode.max.transfer.threads", 40);
+    c.setInt("hbase.client.sync.wait.timeout.msec", 60000);
+
     // Insert our custom region
     c.setClass(HConstants.REGION_IMPL, regionClass, HRegion.class);
     // Encourage plenty of flushes

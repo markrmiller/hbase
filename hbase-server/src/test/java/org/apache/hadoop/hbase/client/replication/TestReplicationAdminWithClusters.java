@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HConstants;
@@ -83,11 +85,11 @@ public class TestReplicationAdminWithClusters extends TestReplicationBase {
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
-    admin1.close();
-    admin2.close();
-    adminExt.close();
-    connection1.close();
-    connection2.close();
+    IOUtils.closeQuietly(admin1);
+    IOUtils.closeQuietly(admin2);
+    IOUtils.closeQuietly(adminExt);
+    IOUtils.closeQuietly(connection1);
+    IOUtils.closeQuietly(connection2);
     TestReplicationBase.tearDownAfterClass();
   }
 

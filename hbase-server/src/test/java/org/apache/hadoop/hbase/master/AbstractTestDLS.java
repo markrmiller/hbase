@@ -103,9 +103,9 @@ public abstract class AbstractTestDLS {
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
-  // Start a cluster with 2 masters and 5 regionservers
+  // Start a cluster with 2 masters and 3 regionservers
   private static final int NUM_MASTERS = 2;
-  private static final int NUM_RS = 5;
+  private static final int NUM_RS = 3;
   private static byte[] COLUMN_FAMILY = Bytes.toBytes("family");
 
   @Rule
@@ -124,8 +124,10 @@ public abstract class AbstractTestDLS {
     // Uncomment the following line if more verbosity is needed for
     // debugging (see HBASE-12285 for details).
     // Logger.getLogger("org.apache.hadoop.hbase").setLevel(Level.DEBUG);
+    TEST_UTIL.getConfiguration().setInt("hbase.client.retries.number", 3);
     TEST_UTIL.startMiniZKCluster();
-    TEST_UTIL.startMiniDFSCluster(3);
+    TEST_UTIL.startMiniDFSCluster(2);
+    TEST_UTIL.getDFSCluster().waitActive();
   }
 
   @AfterClass
@@ -139,6 +141,7 @@ public abstract class AbstractTestDLS {
     SplitLogCounters.resetCounters();
     LOG.info("Starting cluster");
     conf.setLong("hbase.splitlog.max.resubmit", 0);
+    conf.setInt("hbase.client.retries.number", 3);
     // Make the failure test faster
     conf.setInt("zookeeper.recovery.retry", 0);
     conf.setInt(HConstants.REGIONSERVER_INFO_PORT, -1);
@@ -153,7 +156,7 @@ public abstract class AbstractTestDLS {
     LOG.info("Waiting for active/ready master");
     cluster.waitForActiveAndReadyMaster();
     master = cluster.getMaster();
-    TEST_UTIL.waitFor(120000, 200, new Waiter.Predicate<Exception>() {
+    TEST_UTIL.waitFor(30000, 350, new Waiter.Predicate<Exception>() {
       @Override
       public boolean evaluate() throws Exception {
         return cluster.getLiveRegionServerThreads().size() >= numRS;
@@ -176,7 +179,7 @@ public abstract class AbstractTestDLS {
 
   @Test
   public void testRecoveredEdits() throws Exception {
-    conf.setLong("hbase.regionserver.hlog.blocksize", 30 * 1024); // create more than one wal
+    conf.setLong("hbase.regionserver.hlog.blocksize", 60 * 1024); // create more than one wal
     startCluster(NUM_RS);
 
     int numLogLines = 10000;
@@ -190,7 +193,7 @@ public abstract class AbstractTestDLS {
 
     Path rootdir = FSUtils.getRootDir(conf);
 
-    int numRegions = 50;
+    int numRegions = 25;
     try (Table t = installTable(numRegions)) {
       List<RegionInfo> regions = null;
       HRegionServer hrs = null;
@@ -372,7 +375,7 @@ public abstract class AbstractTestDLS {
     int numRegionsToCreate = 40;
     int numRowsPerRegion = 100;
 
-    startCluster(NUM_RS); // NUM_RS=6.
+    startCluster(NUM_RS);
 
     try (Table table = installTable(numRegionsToCreate)) {
       populateDataInTable(numRowsPerRegion);
@@ -381,13 +384,12 @@ public abstract class AbstractTestDLS {
       assertEquals(NUM_RS, rsts.size());
       cluster.killRegionServer(rsts.get(0).getRegionServer().getServerName());
       cluster.killRegionServer(rsts.get(1).getRegionServer().getServerName());
-      cluster.killRegionServer(rsts.get(2).getRegionServer().getServerName());
 
       TEST_UTIL.waitFor(60000, new Waiter.ExplainingPredicate<Exception>() {
 
         @Override
         public boolean evaluate() throws Exception {
-          return cluster.getLiveRegionServerThreads().size() <= NUM_RS - 3;
+          return cluster.getLiveRegionServerThreads().size() <= NUM_RS - 2;
         }
 
         @Override

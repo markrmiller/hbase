@@ -26,9 +26,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.Pair;
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,20 +61,20 @@ public class DeadServer {
    * and it's server logs are recovered, it will be told to call server startup
    * because by then, its regions have probably been reassigned.
    */
-  private final Map<ServerName, Long> deadServers = new HashMap<>();
+  private final Map<ServerName, Long>  deadServers = Maps.newConcurrentMap();
 
   /**
    * Set of dead servers currently being processed by a SCP.
    * Added to this list at the start of SCP and removed after it is done
    * processing the crash.
    */
-  private final Set<ServerName> processingServers = new HashSet<>();
+  private final Set<ServerName> processingServers = ConcurrentHashMap.newKeySet();
 
   /**
    * @param serverName server name.
    * @return true if this server is on the dead servers list false otherwise
    */
-  public synchronized boolean isDeadServer(final ServerName serverName) {
+  public boolean isDeadServer(final ServerName serverName) {
     return deadServers.containsKey(serverName);
   }
 
@@ -85,7 +89,7 @@ public class DeadServer {
     return !processingServers.isEmpty();
   }
 
-  public synchronized Set<ServerName> copyServerNames() {
+  public Set<ServerName> copyServerNames() {
     Set<ServerName> clone = new HashSet<>(deadServers.size());
     clone.addAll(deadServers.keySet());
     return clone;
@@ -94,7 +98,7 @@ public class DeadServer {
   /**
    * Adds the server to the dead server list if it's not there already.
    */
-  synchronized void putIfAbsent(ServerName sn) {
+  void putIfAbsent(ServerName sn) {
     this.deadServers.putIfAbsent(sn, EnvironmentEdgeManager.currentTime());
     processing(sn);
   }
@@ -103,7 +107,7 @@ public class DeadServer {
    * Add <code>sn<</code> to set of processing deadservers.
    * @see #finish(ServerName)
    */
-  public synchronized void processing(ServerName sn) {
+  public void processing(ServerName sn) {
     if (processingServers.add(sn)) {
       // Only log on add.
       LOG.debug("Processing {}; numProcessing={}", sn, processingServers.size());
@@ -115,17 +119,17 @@ public class DeadServer {
    * @param sn ServerName for the dead server.
    * @see #processing(ServerName)
    */
-  public synchronized void finish(ServerName sn) {
+  public void finish(ServerName sn) {
     if (processingServers.remove(sn)) {
       LOG.debug("Removed {} from processing; numProcessing={}", sn, processingServers.size());
     }
   }
 
-  public synchronized int size() {
+  public int size() {
     return deadServers.size();
   }
 
-  synchronized boolean isEmpty() {
+  boolean isEmpty() {
     return deadServers.isEmpty();
   }
 
@@ -138,7 +142,7 @@ public class DeadServer {
    *                      <code>host,port,startcode</code>.
    * @return true if this server was dead before and coming back alive again
    */
-  synchronized boolean cleanPreviousInstance(final ServerName newServerName) {
+  boolean cleanPreviousInstance(final ServerName newServerName) {
     Iterator<ServerName> it = deadServers.keySet().iterator();
     while (it.hasNext()) {
       if (cleanOldServerName(newServerName, it)) {
@@ -148,7 +152,7 @@ public class DeadServer {
     return false;
   }
 
-  synchronized void cleanAllPreviousInstances(final ServerName newServerName) {
+  void cleanAllPreviousInstances(final ServerName newServerName) {
     Iterator<ServerName> it = deadServers.keySet().iterator();
     while (it.hasNext()) {
       cleanOldServerName(newServerName, it);
@@ -175,7 +179,7 @@ public class DeadServer {
   }
 
   @Override
-  public synchronized String toString() {
+  public String toString() {
     // Display unified set of servers from both maps
     Set<ServerName> servers = new HashSet<>();
     servers.addAll(deadServers.keySet());
@@ -199,7 +203,7 @@ public class DeadServer {
    * @param ts the time, 0 for all
    * @return a sorted array list, by death time, lowest values first.
    */
-  synchronized List<Pair<ServerName, Long>> copyDeadServersSince(long ts) {
+  List<Pair<ServerName, Long>> copyDeadServersSince(long ts) {
     List<Pair<ServerName, Long>> res =  new ArrayList<>(size());
 
     for (Map.Entry<ServerName, Long> entry:deadServers.entrySet()){
@@ -217,7 +221,7 @@ public class DeadServer {
    * @param deadServerName the dead server name
    * @return the date when the server died 
    */
-  public synchronized Date getTimeOfDeath(final ServerName deadServerName){
+  public Date getTimeOfDeath(final ServerName deadServerName){
     Long time = deadServers.get(deadServerName);
     return time == null ? null : new Date(time);
   }
@@ -227,7 +231,7 @@ public class DeadServer {
    * @param deadServerName the dead server name
    * @return true if this server was removed
    */
-  public synchronized boolean removeDeadServer(final ServerName deadServerName) {
+  public boolean removeDeadServer(final ServerName deadServerName) {
     Preconditions.checkState(!processingServers.contains(deadServerName),
       "Asked to remove server still in processingServers set " + deadServerName +
           " (numProcessing=" + processingServers.size() + ")");

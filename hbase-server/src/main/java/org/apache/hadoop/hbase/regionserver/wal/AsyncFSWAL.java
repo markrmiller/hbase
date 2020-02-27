@@ -754,6 +754,12 @@ public class AsyncFSWAL extends AbstractFSWAL<AsyncWriter> {
     syncFutures.forEach(f -> f.done(f.getTxid(), error));
     if (!(consumeExecutor instanceof EventLoop)) {
       consumeExecutor.shutdown();
+//      try {
+//        consumeExecutor.awaitTermination(30, TimeUnit.SECONDS); // nocommit
+//      } catch (InterruptedException e) {
+//        Thread.currentThread().interrupt();
+//        throw new RuntimeException(e);
+//      }
     }
   }
 

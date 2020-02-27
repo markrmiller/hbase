@@ -266,9 +266,9 @@ public class HRegionServer extends HasThread implements
   private final Cache<Long, Long> executedRegionProcedures =
       CacheBuilder.newBuilder().expireAfterAccess(600, TimeUnit.SECONDS).build();
 
-  private MemStoreFlusher cacheFlusher;
+  private volatile MemStoreFlusher cacheFlusher;
 
-  private HeapMemoryManager hMemManager;
+  private volatile HeapMemoryManager hMemManager;
 
   /**
    * Cluster connection to be shared by services.
@@ -278,19 +278,19 @@ public class HRegionServer extends HasThread implements
    * their own; if they create their own, there is no way for the hosting server to shutdown
    * ongoing client RPCs.
    */
-  protected ClusterConnection clusterConnection;
+  protected volatile ClusterConnection clusterConnection;
 
   /**
    * Go here to get table descriptors.
    */
-  protected TableDescriptors tableDescriptors;
+  protected volatile TableDescriptors tableDescriptors;
 
   // Replication services. If no replication, this handler will be null.
-  private ReplicationSourceService replicationSourceHandler;
-  private ReplicationSinkService replicationSinkHandler;
+  private volatile ReplicationSourceService replicationSourceHandler;
+  private volatile ReplicationSinkService replicationSinkHandler;
 
   // Compactions
-  public CompactSplit compactSplitThread;
+  public volatile CompactSplit compactSplitThread;
 
   /**
    * Map of regions currently being served by this region server. Key is the
@@ -314,14 +314,14 @@ public class HRegionServer extends HasThread implements
    */
   private final Map<String, InetSocketAddress[]> regionFavoredNodesMap = new ConcurrentHashMap<>();
 
-  private LeaseManager leaseManager;
+  private volatile LeaseManager leaseManager;
 
   // Instance of the hbase executor executorService.
-  protected ExecutorService executorService;
+  protected volatile ExecutorService executorService;
 
   private volatile boolean dataFsOk;
-  private HFileSystem dataFs;
-  private HFileSystem walFs;
+  private volatile HFileSystem dataFs;
+  private volatile HFileSystem walFs;
 
   // Set when a report to the master comes back with a message asking us to
   // shutdown. Also set by call to stop when debugging or running unit tests
@@ -339,14 +339,14 @@ public class HRegionServer extends HasThread implements
 
   // A state before we go into stopped state.  At this stage we're closing user
   // space regions.
-  private boolean stopping = false;
+  private volatile boolean stopping = false;
   private volatile boolean killed = false;
   private volatile boolean shutDown = false;
 
   protected final Configuration conf;
 
-  private Path dataRootDir;
-  private Path walRootDir;
+  private volatile Path dataRootDir;
+  private volatile Path walRootDir;
 
   private final int threadWakeFrequency;
   final int msgInterval;
@@ -360,47 +360,47 @@ public class HRegionServer extends HasThread implements
   private volatile RegionServerStatusService.BlockingInterface rssStub;
   private volatile LockService.BlockingInterface lockStub;
   // RPC client. Used to make the stub above that does region server status checking.
-  private RpcClient rpcClient;
+  private volatile RpcClient rpcClient;
 
-  private RpcRetryingCallerFactory rpcRetryingCallerFactory;
-  private RpcControllerFactory rpcControllerFactory;
+  private volatile RpcRetryingCallerFactory rpcRetryingCallerFactory;
+  private volatile  RpcControllerFactory rpcControllerFactory;
 
-  private UncaughtExceptionHandler uncaughtExceptionHandler;
+  private volatile UncaughtExceptionHandler uncaughtExceptionHandler;
 
   // Info server. Default access so can be used by unit tests. REGIONSERVER
   // is name of the webapp and the attribute name used stuffing this instance
   // into web context.
-  protected InfoServer infoServer;
-  private JvmPauseMonitor pauseMonitor;
+  protected volatile InfoServer infoServer;
+  private volatile JvmPauseMonitor pauseMonitor;
 
   /** region server process name */
   public static final String REGIONSERVER = "regionserver";
 
-  private MetricsRegionServer metricsRegionServer;
-  MetricsRegionServerWrapperImpl metricsRegionServerImpl;
-  private SpanReceiverHost spanReceiverHost;
+  private volatile MetricsRegionServer metricsRegionServer;
+  volatile MetricsRegionServerWrapperImpl metricsRegionServerImpl;
+  private volatile SpanReceiverHost spanReceiverHost;
 
   /**
    * ChoreService used to schedule tasks that we want to run periodically
    */
-  private ChoreService choreService;
+  private volatile ChoreService choreService;
 
   /**
    * Check for compactions requests.
    */
-  private ScheduledChore compactionChecker;
+  private volatile ScheduledChore compactionChecker;
 
   /**
    * Check for flushes
    */
-  private ScheduledChore periodicFlusher;
+  private volatile ScheduledChore periodicFlusher;
 
   private volatile WALFactory walFactory;
 
-  private LogRoller walRoller;
+  private volatile LogRoller walRoller;
 
   // A thread which calls reportProcedureDone
-  private RemoteProcedureResultReporter procedureResultReporter;
+  private volatile RemoteProcedureResultReporter procedureResultReporter;
 
   // flag set after we're done setting up server threads
   final AtomicBoolean online = new AtomicBoolean(false);
@@ -426,29 +426,29 @@ public class HRegionServer extends HasThread implements
   private final RegionServerAccounting regionServerAccounting;
 
   // Block cache
-  private BlockCache blockCache;
+  private volatile BlockCache blockCache;
   // The cache for mob files
-  private MobFileCache mobFileCache;
+  private volatile MobFileCache mobFileCache;
 
   /** The health check chore. */
-  private HealthCheckChore healthCheckChore;
+  private volatile HealthCheckChore healthCheckChore;
 
   /** The nonce manager chore. */
-  private ScheduledChore nonceManagerChore;
+  private volatile ScheduledChore nonceManagerChore;
 
-  private Map<String, com.google.protobuf.Service> coprocessorServiceHandlers = Maps.newHashMap();
+  private Map<String, com.google.protobuf.Service> coprocessorServiceHandlers = Maps.newConcurrentMap();
 
   /**
    * The server name the Master sees us as.  Its made from the hostname the
    * master passes us, port, and server startcode. Gets set after registration
    * against Master.
    */
-  protected ServerName serverName;
+  protected volatile ServerName serverName;
 
   /**
    * hostname specified by hostname config
    */
-  protected String useThisHostnameInstead;
+  protected volatile String useThisHostnameInstead;
 
   /**
    * HBASE-18226: This config and hbase.regionserver.hostname are mutually exclusive.
@@ -466,22 +466,22 @@ public class HRegionServer extends HasThread implements
   /**
    * Unique identifier for the cluster we are a part of.
    */
-  protected String clusterId;
+  protected volatile String clusterId;
 
   /**
    * Chore to clean periodically the moved region list
    */
-  private MovedRegionsCleaner movedRegionsCleaner;
+  private volatile MovedRegionsCleaner movedRegionsCleaner;
 
   // chore for refreshing store files for secondary regions
-  private StorefileRefresherChore storefileRefresher;
+  private volatile StorefileRefresherChore storefileRefresher;
 
-  private RegionServerCoprocessorHost rsHost;
+  private volatile RegionServerCoprocessorHost rsHost;
 
-  private RegionServerProcedureManagerHost rspmHost;
+  private volatile RegionServerProcedureManagerHost rspmHost;
 
-  private RegionServerRpcQuotaManager rsQuotaManager;
-  private RegionServerSpaceQuotaManager rsSpaceQuotaManager;
+  private volatile RegionServerRpcQuotaManager rsQuotaManager;
+  private volatile RegionServerSpaceQuotaManager rsSpaceQuotaManager;
 
   /**
    * Nonce manager. Nonces are used to make operations like increment and append idempotent
@@ -503,11 +503,11 @@ public class HRegionServer extends HasThread implements
    */
   final ServerNonceManager nonceManager;
 
-  private UserProvider userProvider;
+  private volatile UserProvider userProvider;
 
   protected final RSRpcServices rpcServices;
 
-  private CoordinatedStateManager csm;
+  private volatile CoordinatedStateManager csm;
 
   /**
    * Configuration manager is used to register/deregister and notify the configuration observers
@@ -520,9 +520,9 @@ public class HRegionServer extends HasThread implements
 
   private volatile ThroughputController flushThroughputController;
 
-  private SecureBulkLoadManager secureBulkLoadManager;
+  private volatile SecureBulkLoadManager secureBulkLoadManager;
 
-  private FileSystemUtilizationChore fsUtilizationChore;
+  private volatile FileSystemUtilizationChore fsUtilizationChore;
 
   private final NettyEventLoopGroupConfig eventLoopGroupConfig;
 
@@ -545,7 +545,7 @@ public class HRegionServer extends HasThread implements
   private static final String REGIONSERVER_CODEC = "hbase.regionserver.codecs";
 
   // A timer to shutdown the process if abort takes too long
-  private Timer abortMonitor;
+  private volatile Timer abortMonitor;
 
   /**
    * Starts a HRegionServer at the default location.
@@ -1135,6 +1135,10 @@ public class HRegionServer extends HasThread implements
     if (this.dataFsOk) {
       shutdownWAL(!abortRequested);
     }
+
+   // if (eventLoopGroupConfig != null) {
+   //   eventLoopGroupConfig.group().shutdownGracefully();
+   // }
 
     // Make sure the proxy is down.
     if (this.rssStub != null) {
@@ -2213,6 +2217,7 @@ public class HRegionServer extends HasThread implements
   public void stop(final String msg, final boolean force, final User user) {
     if (!this.stopped) {
       LOG.info("***** STOPPING region server '" + this + "' *****");
+      //this.executorService.shutdown();
       if (this.rsHost != null) {
         // when forced via abort don't allow CPs to override
         try {
@@ -2225,6 +2230,8 @@ public class HRegionServer extends HasThread implements
           LOG.warn("Skipping coprocessor exception on preStop() due to forced shutdown", ioe);
         }
       }
+      //eventLoopGroupConfig.group().shutdownGracefully();
+      // executorService.awaitTermination(); nocommit
       this.stopped = true;
       LOG.info("STOPPED: " + msg);
       // Wakes run() if it is sleeping
@@ -2629,6 +2636,9 @@ public class HRegionServer extends HasThread implements
     boolean interrupted = false;
     try {
       while (keepLooping()) {
+      //  if (isStopped() || isAborted() || isStopping() || isShutDown()) {
+      //    throw new RuntimeException("HRegionServer is stopped or stopping ");
+      //  }
         sn = this.masterAddressTracker.getMasterAddress(refresh);
         if (sn == null) {
           if (!keepLooping()) {

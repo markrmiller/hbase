@@ -45,7 +45,7 @@ public final class ClientTokenUtil {
   private static final Logger LOG = LoggerFactory.getLogger(ClientTokenUtil.class);
 
   // Set in TestClientTokenUtil via reflection
-  private static ServiceException injectedException;
+  private static volatile ServiceException injectedException;
 
   private ClientTokenUtil() {}
 

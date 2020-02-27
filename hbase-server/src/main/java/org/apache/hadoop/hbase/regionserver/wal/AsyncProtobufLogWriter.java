@@ -151,10 +151,13 @@ public class AsyncProtobufLogWriter extends AbstractProtobufLogWriter
     }
     try {
       writeWALTrailer();
+      output.flush(false); // nocommit
       output.close();
     } catch (Exception e) {
       LOG.warn("normal close failed, try recover", e);
       output.recoverAndClose(null);
+    } finally {
+      //eventLoopGroup.shutdownGracefully();
     }
     this.output = null;
   }

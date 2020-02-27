@@ -24,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -294,5 +296,7 @@ public class MetaTableMetrics implements RegionCoprocessor {
     for(String metric:metrics){
       registry.remove(metric);
     }
+   // IOUtils.closeQuietly(clientMetricsLossyCounting);
+   // IOUtils.closeQuietly(regionMetricsLossyCounting);
   }
 }

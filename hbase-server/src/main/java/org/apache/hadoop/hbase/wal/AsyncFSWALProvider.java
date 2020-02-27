@@ -83,7 +83,7 @@ public class AsyncFSWALProvider extends AbstractFSWALProvider<AsyncFSWAL> {
       channelClass = eventLoopGroupAndChannelClass.getSecond();
     } else {
       eventLoopGroup = new NioEventLoopGroup(1,
-          new DefaultThreadFactory("AsyncFSWAL", true, Thread.MAX_PRIORITY));
+          new DefaultThreadFactory("AsyncFSWAL", true, Thread.NORM_PRIORITY));
       channelClass = NioSocketChannel.class;
     }
   }
@@ -139,5 +139,10 @@ public class AsyncFSWALProvider extends AbstractFSWALProvider<AsyncFSWAL> {
     } catch (Throwable e) {
       return false;
     }
+  }
+
+  public void close() throws IOException {
+    //eventLoopGroup.shutdownGracefully();
+    super.close();
   }
 }

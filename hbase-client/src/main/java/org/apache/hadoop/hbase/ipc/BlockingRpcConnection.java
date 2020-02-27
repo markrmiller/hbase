@@ -254,6 +254,7 @@ class BlockingRpcConnection extends RpcConnection implements Runnable {
         this.socket = this.rpcClient.socketFactory.createSocket();
         this.socket.setTcpNoDelay(this.rpcClient.isTcpNoDelay());
         this.socket.setKeepAlive(this.rpcClient.tcpKeepAlive);
+        this.socket.setReuseAddress(true);
         if (this.rpcClient.localAddr != null) {
           this.socket.bind(this.rpcClient.localAddr);
         }

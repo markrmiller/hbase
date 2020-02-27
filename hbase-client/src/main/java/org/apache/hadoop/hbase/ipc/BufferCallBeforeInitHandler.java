@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hbase.ipc;
 
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 import org.apache.hbase.thirdparty.io.netty.channel.ChannelDuplexHandler;
 import org.apache.hbase.thirdparty.io.netty.channel.ChannelHandlerContext;
 import org.apache.hbase.thirdparty.io.netty.channel.ChannelPromise;
@@ -62,7 +63,7 @@ class BufferCallBeforeInitHandler extends ChannelDuplexHandler {
   private static final BufferCallEvent SUCCESS_EVENT = new BufferCallEvent(BufferCallAction.FLUSH,
       null);
 
-  private final Map<Integer, Call> id2Call = new HashMap<>();
+  private final Map<Integer, Call> id2Call = Maps.newConcurrentMap();
 
   @Override
   public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {

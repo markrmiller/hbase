@@ -56,7 +56,7 @@ public abstract class ClientPushbackTestBase {
   protected static final TableName tableName = TableName.valueOf("client-pushback");
   private static final byte[] family = Bytes.toBytes("f");
   private static final byte[] qualifier = Bytes.toBytes("q");
-  private static final long flushSizeBytes = 512;
+  private static final long flushSizeBytes = 1024;
 
   @BeforeClass
   public static void setupCluster() throws Exception {

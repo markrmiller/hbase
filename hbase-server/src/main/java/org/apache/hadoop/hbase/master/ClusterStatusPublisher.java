@@ -174,6 +174,7 @@ public class ClusterStatusPublisher extends ScheduledChore {
   protected synchronized void cleanup() {
     connected = false;
     publisher.close();
+
   }
 
   private synchronized boolean isConnected() {
@@ -369,10 +370,13 @@ public class ClusterStatusPublisher extends ScheduledChore {
 
     @Override
     public void close() {
-      if (channel != null) {
-        channel.close();
+      try {
+        if (channel != null) {
+          channel.close();
+        }
+      } finally {
+        // group.shutdownGracefully();
       }
-      group.shutdownGracefully();
     }
   }
 }

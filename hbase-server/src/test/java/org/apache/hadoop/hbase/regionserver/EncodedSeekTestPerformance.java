@@ -36,7 +36,7 @@ import org.apache.hadoop.hbase.io.hfile.LruBlockCache;
  * Test seek performance for encoded data blocks. Read an HFile and do several
  * random seeks.
  */
-public class EncodedSeekPerformanceTest {
+public class EncodedSeekTestPerformance {
   private static final double NANOSEC_IN_SEC = 1000.0 * 1000.0 * 1000.0;
   private static final double BYTES_IN_MEGABYTES = 1024.0 * 1024.0;
   /** Default number of seeks which will be used in benchmark. */
@@ -49,7 +49,7 @@ public class EncodedSeekPerformanceTest {
   private int numberOfSeeks;
 
   /** Use this benchmark with default options */
-  public EncodedSeekPerformanceTest() {
+  public EncodedSeekTestPerformance() {
     configuration.setFloat(HConstants.HFILE_BLOCK_CACHE_SIZE_KEY, 0.5f);
     randomizer = new Random(42L);
     numberOfSeeks = DEFAULT_NUMBER_OF_SEEKS;
@@ -169,7 +169,7 @@ public class EncodedSeekPerformanceTest {
     Path path = new Path(args[0]);
 
     // TODO, this test doesn't work as expected any more. Need to fix.
-    EncodedSeekPerformanceTest utility = new EncodedSeekPerformanceTest();
+    EncodedSeekTestPerformance utility = new EncodedSeekTestPerformance();
     utility.runTests(path, DataBlockEncoding.values());
 
     System.exit(0);

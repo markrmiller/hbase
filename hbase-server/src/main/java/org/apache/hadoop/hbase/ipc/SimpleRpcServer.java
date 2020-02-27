@@ -116,6 +116,7 @@ public class SimpleRpcServer extends RpcServer {
       // Create a new server socket and set to non blocking mode
       acceptChannel = ServerSocketChannel.open();
       acceptChannel.configureBlocking(false);
+      acceptChannel.socket().setReuseAddress(true);
 
       // Bind the server socket to the binding addrees (can be different from the default interface)
       bind(acceptChannel.socket(), bindAddress, backlogLength);
@@ -302,6 +303,7 @@ public class SimpleRpcServer extends RpcServer {
         channel.configureBlocking(false);
         channel.socket().setTcpNoDelay(tcpNoDelay);
         channel.socket().setKeepAlive(tcpKeepAlive);
+        channel.socket().setReuseAddress(true);
         Reader reader = getReader();
         SimpleServerRpcConnection c = connectionManager.register(channel);
         // If the connectionManager can't take it, close the connection.

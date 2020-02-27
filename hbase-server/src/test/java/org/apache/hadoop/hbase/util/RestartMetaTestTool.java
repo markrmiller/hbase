@@ -39,9 +39,9 @@ import org.apache.hbase.thirdparty.org.apache.commons.cli.CommandLine;
  * some data, restarts the regionserver holding hbase:meta, and verifies that the
  * cluster recovers.
  */
-public class RestartMetaTest extends AbstractHBaseTool {
+public class RestartMetaTestTool extends AbstractHBaseTool {
 
-  private static final Logger LOG = LoggerFactory.getLogger(RestartMetaTest.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RestartMetaTestTool.class);
 
   /** The number of region servers used if not specified */
   private static final int DEFAULT_NUM_RS = 2;
@@ -154,7 +154,7 @@ public class RestartMetaTest extends AbstractHBaseTool {
   }
 
   public static void main(String[] args) {
-    new RestartMetaTest().doStaticMain(args);
+    new RestartMetaTestTool().doStaticMain(args);
   }
 
 }
