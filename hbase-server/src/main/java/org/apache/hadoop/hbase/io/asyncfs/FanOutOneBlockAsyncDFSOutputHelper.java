@@ -36,7 +36,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.crypto.CryptoProtocolVersion;
@@ -536,7 +539,7 @@ public final class FanOutOneBlockAsyncDFSOutputHelper {
         // overwrite the old broken file.
         overwrite = true;
         try {
-          Thread.sleep(ConnectionUtils.getPauseTime(100, retry));
+          Thread.sleep(ConnectionUtils.getPauseTime(250, retry));
         } catch (InterruptedException ie) {
           throw new InterruptedIOException();
         }

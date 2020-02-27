@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.tool;
 
 import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
+import org.apache.hadoop.hbase.StartMiniClusterOption;
 import org.apache.hadoop.hbase.security.HadoopSecurityEnabledUserProviderForTesting;
 import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.security.access.PermissionStorage;
@@ -52,16 +53,22 @@ public class TestSecureLoadIncrementalHFilesSplitRecovery
   @BeforeClass
   public static void setupCluster() throws Exception {
     util = new HBaseTestingUtility();
+    util.getConfiguration().setInt("dfs.datanode.max.transfer.threads", 80);
     // set the always on security provider
     UserProvider.setUserProviderForTesting(util.getConfiguration(),
       HadoopSecurityEnabledUserProviderForTesting.class);
     // setup configuration
     SecureTestUtil.enableSecurity(util.getConfiguration());
 
-    util.startMiniCluster();
+    StartMiniClusterOption option = StartMiniClusterOption.builder().numDataNodes(2).build();
+    util.startMiniCluster(option);
+
+    util.getMiniHBaseCluster().waitForActiveAndReadyMaster(30000);
 
     // Wait for the ACL table to become available
     util.waitTableEnabled(PermissionStorage.ACL_TABLE_NAME);
+
+    util.getDFSCluster().waitActive();
   }
 
   // Disabling this test as it does not work in secure mode

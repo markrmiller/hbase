@@ -28,7 +28,7 @@ import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.Test;
 
-public class CloneSnapshotFromClientAfterSplittingRegionTestBase
+public abstract class CloneSnapshotFromClientAfterSplittingRegionTestBase
     extends CloneSnapshotFromClientTestBase {
 
   private void splitRegion(final RegionInfo regionInfo) throws IOException {

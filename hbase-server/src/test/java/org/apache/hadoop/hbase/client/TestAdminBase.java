@@ -30,7 +30,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-public class TestAdminBase {
+public abstract class TestAdminBase {
 
   protected final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   protected static Admin ADMIN;

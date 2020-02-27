@@ -30,11 +30,11 @@ import org.apache.hadoop.hbase.util.Pair;
  * The default netty event loop config
  */
 @InterfaceAudience.Private
-class DefaultNettyEventLoopConfig {
+public class DefaultNettyEventLoopConfig {
 
   public static final Pair<EventLoopGroup, Class<? extends Channel>> GROUP_AND_CHANNEL_CLASS = Pair
       .<EventLoopGroup, Class<? extends Channel>> newPair(
-        new NioEventLoopGroup(0,
-            new DefaultThreadFactory("Default-IPC-NioEventLoopGroup", true, Thread.MAX_PRIORITY)),
+        new NioEventLoopGroup(Integer.getInteger("hbase.netty.eventloop.default.pool", 0),
+            new DefaultThreadFactory("Default-IPC-NioEventLoopGroup", true, Thread.NORM_PRIORITY)),
         NioSocketChannel.class);
 }

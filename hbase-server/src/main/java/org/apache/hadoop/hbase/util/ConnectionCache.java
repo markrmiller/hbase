@@ -71,15 +71,16 @@ public class ConnectionCache {
       final int cleanInterval, final int maxIdleTime) throws IOException {
     Stoppable stoppable = new Stoppable() {
       private volatile boolean isStopped = false;
-      @Override public void stop(String why) { isStopped = true;}
-      @Override public boolean isStopped() {return isStopped;}
+      @Override public void stop(String why) {
+        isStopped = true;}
+      @Override public boolean isStopped() {
+        return isStopped;}
     };
     this.choreService = new ChoreService("ConnectionCache");
     ScheduledChore cleaner = new ScheduledChore("ConnectionCleaner", stoppable, cleanInterval) {
-      @Override
-      protected void chore() {
-        for (Map.Entry<String, ConnectionInfo> entry: connections.entrySet()) {
-          ConnectionInfo connInfo = entry.getValue();
+      @Override protected void chore() {
+
+        connections.forEach((s, connInfo) -> {
           if (connInfo.timedOut(maxIdleTime)) {
             if (connInfo.admin != null) {
               try {
@@ -94,7 +95,8 @@ public class ConnectionCache {
               LOG.info("Got exception in closing idle connection", t);
             }
           }
-        }
+        });
+
       }
     };
     // Start the daemon cleaner chore

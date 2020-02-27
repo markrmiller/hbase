@@ -181,11 +181,12 @@ public class SnapshotFileCache implements Stoppable {
     if (snapshotManager != null) {
       lock = snapshotManager.getTakingSnapshotLock().writeLock();
     }
-    if (lock == null || lock.tryLock()) {
-      try {
+    try {
+      if (lock == null || lock.tryLock()) {
+
         if (snapshotManager != null && snapshotManager.isTakingAnySnapshot()) {
-          LOG.warn("Not checking unreferenced files since snapshot is running, it will " +
-            "skip to clean the HFiles this time");
+          LOG.warn("Not checking unreferenced files since snapshot is running, it will "
+              + "skip to clean the HFiles this time");
           return unReferencedFiles;
         }
         for (FileStatus file : files) {
@@ -199,16 +200,17 @@ public class SnapshotFileCache implements Stoppable {
           }
           unReferencedFiles.add(file);
         }
-      } finally {
-        if (lock != null) {
-          lock.unlock();
-        }
+      }
+    } finally {
+      if (lock != null) {
+        lock.unlock();
       }
     }
+
     return unReferencedFiles;
   }
 
-  private void refreshCache() throws IOException {
+  private synchronized void refreshCache() throws IOException {
     // just list the snapshot directory directly, do not check the modification time for the root
     // snapshot directory, as some file system implementations do not modify the parent directory's
     // modTime when there are new sub items, for example, S3.

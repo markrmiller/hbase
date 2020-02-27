@@ -307,21 +307,21 @@ public class HMaster extends HRegionServer implements MasterServices {
   // Draining region server tracker
   private DrainingServerTracker drainingServerTracker;
   // Tracker for load balancer state
-  LoadBalancerTracker loadBalancerTracker;
+  volatile LoadBalancerTracker loadBalancerTracker;
   // Tracker for meta location, if any client ZK quorum specified
-  MetaLocationSyncer metaLocationSyncer;
+  volatile MetaLocationSyncer metaLocationSyncer;
   // Tracker for active master location, if any client ZK quorum specified
-  MasterAddressSyncer masterAddressSyncer;
+  volatile MasterAddressSyncer masterAddressSyncer;
   // Tracker for auto snapshot cleanup state
-  SnapshotCleanupTracker snapshotCleanupTracker;
+  volatile SnapshotCleanupTracker snapshotCleanupTracker;
 
   // Tracker for split and merge state
-  private SplitOrMergeTracker splitOrMergeTracker;
+  private volatile SplitOrMergeTracker splitOrMergeTracker;
 
   // Tracker for region normalizer state
-  private RegionNormalizerTracker regionNormalizerTracker;
+  private volatile RegionNormalizerTracker regionNormalizerTracker;
 
-  private ClusterSchemaService clusterSchemaService;
+  private volatile ClusterSchemaService clusterSchemaService;
 
   public static final String HBASE_MASTER_WAIT_ON_SERVICE_IN_SECONDS =
     "hbase.master.wait.on.service.seconds";
@@ -334,21 +334,21 @@ public class HMaster extends HRegionServer implements MasterServices {
   // Metrics for the HMaster
   final MetricsMaster metricsMaster;
   // file system manager for the master FS operations
-  private MasterFileSystem fileSystemManager;
-  private MasterWalManager walManager;
+  private volatile MasterFileSystem fileSystemManager;
+  private volatile MasterWalManager walManager;
 
   // manager to manage procedure-based WAL splitting, can be null if current
   // is zk-based WAL splitting. SplitWALManager will replace SplitLogManager
   // and MasterWalManager, which means zk-based WAL splitting code will be
   // useless after we switch to the procedure-based one. our eventual goal
   // is to remove all the zk-based WAL splitting code.
-  private SplitWALManager splitWALManager;
+  private volatile SplitWALManager splitWALManager;
 
   // server manager to deal with region server info
   private volatile ServerManager serverManager;
 
   // manager of assignment nodes in zookeeper
-  private AssignmentManager assignmentManager;
+  private volatile AssignmentManager assignmentManager;
 
   /**
    * Cache for the meta region replica's locations. Also tracks their changes to avoid stale
@@ -357,12 +357,12 @@ public class HMaster extends HRegionServer implements MasterServices {
   private final MetaRegionLocationCache metaRegionLocationCache;
 
   // manager of replication
-  private ReplicationPeerManager replicationPeerManager;
+  private volatile ReplicationPeerManager replicationPeerManager;
 
   // buffer for "fatal error" notices from region servers
   // in the cluster. This is only used for assisting
   // operations/debugging.
-  MemoryBoundedLogMessageBuffer rsFatals;
+  volatile MemoryBoundedLogMessageBuffer rsFatals;
 
   // flag set after we become the active master (used for testing)
   private volatile boolean activeMaster = false;
@@ -381,69 +381,69 @@ public class HMaster extends HRegionServer implements MasterServices {
 
   private final LockManager lockManager = new LockManager(this);
 
-  private LoadBalancer balancer;
-  private RegionNormalizer normalizer;
-  private BalancerChore balancerChore;
-  private RegionNormalizerChore normalizerChore;
-  private ClusterStatusChore clusterStatusChore;
-  private ClusterStatusPublisher clusterStatusPublisherChore = null;
-  private SnapshotCleanerChore snapshotCleanerChore = null;
+  private volatile LoadBalancer balancer;
+  private volatile RegionNormalizer normalizer;
+  private volatile BalancerChore balancerChore;
+  private volatile RegionNormalizerChore normalizerChore;
+  private volatile ClusterStatusChore clusterStatusChore;
+  private volatile ClusterStatusPublisher clusterStatusPublisherChore = null;
+  private volatile SnapshotCleanerChore snapshotCleanerChore = null;
 
-  private HbckChore hbckChore;
-  CatalogJanitor catalogJanitorChore;
-  private DirScanPool cleanerPool;
-  private LogCleaner logCleaner;
-  private HFileCleaner hfileCleaner;
-  private ReplicationBarrierCleaner replicationBarrierCleaner;
-  private ExpiredMobFileCleanerChore expiredMobFileCleanerChore;
-  private MobCompactionChore mobCompactChore;
-  private MasterMobCompactionThread mobCompactThread;
+  private volatile HbckChore hbckChore;
+  volatile CatalogJanitor catalogJanitorChore;
+  private volatile DirScanPool cleanerPool;
+  private volatile LogCleaner logCleaner;
+  private volatile HFileCleaner hfileCleaner;
+  private volatile ReplicationBarrierCleaner replicationBarrierCleaner;
+  private volatile ExpiredMobFileCleanerChore expiredMobFileCleanerChore;
+  private volatile MobCompactionChore mobCompactChore;
+  private volatile MasterMobCompactionThread mobCompactThread;
   // used to synchronize the mobCompactionStates
   private final IdLock mobCompactionLock = new IdLock();
   // save the information of mob compactions in tables.
   // the key is table name, the value is the number of compactions in that table.
-  private Map<TableName, AtomicInteger> mobCompactionStates = Maps.newConcurrentMap();
+  private volatile Map<TableName, AtomicInteger> mobCompactionStates = Maps.newConcurrentMap();
 
-  MasterCoprocessorHost cpHost;
+  volatile MasterCoprocessorHost cpHost;
 
   private final boolean preLoadTableDescriptors;
 
   // Time stamps for when a hmaster became active
-  private long masterActiveTime;
+  private volatile long masterActiveTime;
 
   // Time stamp for when HMaster finishes becoming Active Master
-  private long masterFinishedInitializationTime;
+  private volatile long masterFinishedInitializationTime;
 
-  Map<String, Service> coprocessorServiceHandlers = Maps.newHashMap();
+  final Map<String, Service> coprocessorServiceHandlers = Maps.newConcurrentMap();
 
   // monitor for snapshot of hbase tables
-  SnapshotManager snapshotManager;
+  volatile SnapshotManager snapshotManager;
   // monitor for distributed procedures
-  private MasterProcedureManagerHost mpmHost;
+  private volatile MasterProcedureManagerHost mpmHost;
 
-  private RegionsRecoveryChore regionsRecoveryChore = null;
+  private volatile RegionsRecoveryChore regionsRecoveryChore = null;
 
-  private RegionsRecoveryConfigManager regionsRecoveryConfigManager = null;
+  private volatile RegionsRecoveryConfigManager regionsRecoveryConfigManager = null;
   // it is assigned after 'initialized' guard set to true, so should be volatile
   private volatile MasterQuotaManager quotaManager;
-  private SpaceQuotaSnapshotNotifier spaceQuotaSnapshotNotifier;
-  private QuotaObserverChore quotaObserverChore;
-  private SnapshotQuotaObserverChore snapshotQuotaChore;
+  private volatile SpaceQuotaSnapshotNotifier spaceQuotaSnapshotNotifier;
+  private volatile QuotaObserverChore quotaObserverChore;
+  private volatile SnapshotQuotaObserverChore snapshotQuotaChore;
 
-  private ProcedureExecutor<MasterProcedureEnv> procedureExecutor;
-  private ProcedureStore procedureStore;
+  private volatile ProcedureExecutor<MasterProcedureEnv> procedureExecutor;
+  private volatile ProcedureStore procedureStore;
 
   // handle table states
-  private TableStateManager tableStateManager;
+  private volatile TableStateManager tableStateManager;
 
-  private long splitPlanCount;
-  private long mergePlanCount;
+  private volatile long splitPlanCount;
+  private volatile long mergePlanCount;
 
   /* Handle favored nodes information */
-  private FavoredNodesManager favoredNodesManager;
+  private volatile FavoredNodesManager favoredNodesManager;
 
   /** jetty server for master to redirect requests to regionserver infoServer */
-  private Server masterJettyServer;
+  private volatile Server masterJettyServer;
 
   // Determine if we should do normal startup or minimal "single-user" mode with no region
   // servers and no user tables. Useful for repair and recovery of hbase:meta
@@ -667,8 +667,10 @@ public class HMaster extends HRegionServer implements MasterServices {
     final ServerConnector connector = new ServerConnector(masterJettyServer);
     connector.setHost(addr);
     connector.setPort(infoPort);
+    connector.setReuseAddress(true);
     masterJettyServer.addConnector(connector);
     masterJettyServer.setStopAtShutdown(true);
+    masterJettyServer.setStopTimeout(60000);
 
     final String redirectHostname =
         StringUtils.isBlank(useThisHostnameInstead) ? null : useThisHostnameInstead;
@@ -2850,6 +2852,7 @@ public class HMaster extends HRegionServer implements MasterServices {
   public void stop(String msg) {
     if (!isStopped()) {
       super.stop(msg);
+      //clusterStatusPublisherChore.cleanup(); // nocommit - done by chores?
       if (this.activeMasterManager != null) {
         this.activeMasterManager.stop();
       }

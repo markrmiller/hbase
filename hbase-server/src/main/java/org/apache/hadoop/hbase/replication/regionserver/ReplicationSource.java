@@ -63,6 +63,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
 import org.apache.hadoop.hbase.wal.AbstractFSWALProvider;
 import org.apache.hadoop.hbase.wal.WAL.Entry;
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +87,7 @@ public class ReplicationSource implements ReplicationSourceInterface {
   private static final Logger LOG = LoggerFactory.getLogger(ReplicationSource.class);
   // Queues of logs to process, entry in format of walGroupId->queue,
   // each presents a queue for one wal group
-  private Map<String, PriorityBlockingQueue<Path>> queues = new HashMap<>();
+  private Map<String, PriorityBlockingQueue<Path>> queues = Maps.newConcurrentMap();
   // per group queue size, keep no more than this number of logs in each wal group
   protected int queueSizePerGroup;
   protected ReplicationQueueStorage queueStorage;
@@ -336,10 +337,11 @@ public class ReplicationSource implements ReplicationSourceInterface {
   @Override
   public Map<String, ReplicationStatus> getWalGroupStatus() {
     Map<String, ReplicationStatus> sourceReplicationStatus = new TreeMap<>();
-    long ageOfLastShippedOp, replicationDelay, fileSize;
-    for (Map.Entry<String, ReplicationSourceShipper> walGroupShipper : workerThreads.entrySet()) {
-      String walGroupId = walGroupShipper.getKey();
-      ReplicationSourceShipper shipper = walGroupShipper.getValue();
+
+    workerThreads.forEach((k,v)->{
+      long ageOfLastShippedOp, replicationDelay, fileSize;
+      String walGroupId = k;
+      ReplicationSourceShipper shipper = v;
       ageOfLastShippedOp = metrics.getAgeofLastShippedOp(walGroupId);
       int queueSize = queues.get(walGroupId).size();
       replicationDelay = metrics.getReplicationDelay();
@@ -356,16 +358,12 @@ public class ReplicationSource implements ReplicationSourceInterface {
         LOG.warn("{} No replication ongoing, waiting for new log", logPeerId());
       }
       ReplicationStatus.ReplicationStatusBuilder statusBuilder = ReplicationStatus.newBuilder();
-      statusBuilder.withPeerId(this.getPeerId())
-          .withQueueSize(queueSize)
-          .withWalGroup(walGroupId)
-          .withCurrentPath(currentPath)
-          .withCurrentPosition(shipper.getCurrentPosition())
-          .withFileSize(fileSize)
-          .withAgeOfLastShippedOp(ageOfLastShippedOp)
+      statusBuilder.withPeerId(this.getPeerId()).withQueueSize(queueSize).withWalGroup(walGroupId)
+          .withCurrentPath(currentPath).withCurrentPosition(shipper.getCurrentPosition()).withFileSize(fileSize).withAgeOfLastShippedOp(ageOfLastShippedOp)
           .withReplicationDelay(replicationDelay);
       sourceReplicationStatus.put(this.getPeerId() + "=>" + walGroupId, statusBuilder.build());
-    }
+    });
+
     return sourceReplicationStatus;
   }
 
@@ -539,11 +537,13 @@ public class ReplicationSource implements ReplicationSourceInterface {
 
     initializeWALEntryFilter(peerClusterId);
     // start workers
-    for (Map.Entry<String, PriorityBlockingQueue<Path>> entry : queues.entrySet()) {
-      String walGroupId = entry.getKey();
-      PriorityBlockingQueue<Path> queue = entry.getValue();
+
+    queues.forEach((k, v) -> {
+      String walGroupId = k;
+      PriorityBlockingQueue<Path> queue = v;
       tryStartNewShipper(walGroupId, queue);
-    }
+    });
+
   }
 
   @Override
@@ -586,15 +586,15 @@ public class ReplicationSource implements ReplicationSourceInterface {
       initThread.interrupt();
       Threads.shutdown(initThread, this.sleepForRetries);
     }
-    Collection<ReplicationSourceShipper> workers = workerThreads.values();
-    for (ReplicationSourceShipper worker : workers) {
-      worker.stopWorker();
-      if(worker.entryReader != null) {
-        worker.entryReader.setReaderRunning(false);
-      }
-    }
 
-    for (ReplicationSourceShipper worker : workers) {
+    workerThreads.forEach((k,v) -> {
+      v.stopWorker();
+      if (v.entryReader != null) {
+        v.entryReader.setReaderRunning(false);
+      }
+    });
+
+    workerThreads.forEach((k,worker) -> {
       if (worker.isAlive() || worker.entryReader.isAlive()) {
         try {
           // Wait worker to stop
@@ -612,16 +612,17 @@ public class ReplicationSource implements ReplicationSourceInterface {
           worker.entryReader.interrupt();
         }
       }
-    }
+    });
 
     if (this.replicationEndpoint != null) {
       this.replicationEndpoint.stop();
     }
     if (join) {
-      for (ReplicationSourceShipper worker : workers) {
+      workerThreads.forEach((k,worker) -> {
         Threads.shutdown(worker, this.sleepForRetries);
         LOG.info("{} ReplicationSourceWorker {} terminated", logPeerId(), worker.getName());
-      }
+      });
+
       if (this.replicationEndpoint != null) {
         try {
           this.replicationEndpoint.awaitTerminated(sleepForRetries * maxRetriesMultiplier,
@@ -707,9 +708,10 @@ public class ReplicationSource implements ReplicationSourceInterface {
     StringBuilder sb = new StringBuilder();
     sb.append("Total replicated edits: ").append(totalReplicatedEdits)
         .append(", current progress: \n");
-    for (Map.Entry<String, ReplicationSourceShipper> entry : workerThreads.entrySet()) {
-      String walGroupId = entry.getKey();
-      ReplicationSourceShipper worker = entry.getValue();
+
+    workerThreads.forEach((k, v) -> {
+      String walGroupId = k;
+      ReplicationSourceShipper worker = v;
       long position = worker.getCurrentPosition();
       Path currentPath = worker.getCurrentPath();
       sb.append("walGroup [").append(walGroupId).append("]: ");
@@ -719,7 +721,8 @@ public class ReplicationSource implements ReplicationSourceInterface {
       } else {
         sb.append("no replication ongoing, waiting for new log");
       }
-    }
+    });
+
     return sb.toString();
   }
 

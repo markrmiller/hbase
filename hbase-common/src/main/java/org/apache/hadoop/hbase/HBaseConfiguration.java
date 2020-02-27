@@ -85,16 +85,105 @@ public class HBaseConfiguration extends Configuration {
     return conf;
   }
 
+  public static Configuration create() {
+    return create(true);
+  }
+
   /**
    * Creates a Configuration with HBase resources
    * @return a Configuration with HBase resources
    */
-  public static Configuration create() {
+  public static Configuration create(boolean lowLimits) {
     Configuration conf = new Configuration();
     // In case HBaseConfiguration is loaded from a different classloader than
     // Configuration, conf needs to be set with appropriate class loader to resolve
     // HBase resources.
     conf.setClassLoader(HBaseConfiguration.class.getClassLoader());
+
+    if (lowLimits) {
+
+      System.setProperty("hbase.netty.eventloop.default.pool", "5");
+
+      conf.set("hbase.regionserver.hostname", "127.0.0.1");
+
+      conf.set("hbase.regionserver.compactionChecker.majorCompactPriority", "5");
+
+
+      conf.setInt("hbase.hfilearchiver.thread.pool.max", 5);
+      conf.setInt("hbase.client.sync.wait.timeout.msec", 30000);
+      conf.setInt("zookeeper.recovery.retry", 10);
+      conf.setInt(HConstants.ZOOKEEPER_TICK_TIME, 5000);
+      // Yikes, not enough
+      // conf.setInt(HConstants.ZOOKEEPER_MAX_CLIENT_CNXNS, 20);
+
+
+      conf.setInt("hbase.client.retries.number", 10);
+      conf.setInt("hbase.hstore.open.and.close.threads.max", 8);
+      conf.setInt(HConstants.REGION_SERVER_REPLICATION_HANDLER_COUNT, 8);
+
+      conf.setInt(HConstants.HBASE_CLIENT_MAX_TOTAL_TASKS, 10);
+
+      conf.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 8);
+
+      conf.setInt(HConstants.REPLICATION_SOURCE_MAXTHREADS_KEY, 6);
+
+      conf.setInt("hbase.ipc.client.connection.minIdleTimeBeforeClose", 15000);
+      conf.setInt("hbase.client.ipc.pool.size", 5);
+
+      conf.setInt("hbase.netty.worker.count", 5);
+      conf.setInt("org.apache.hbase.thirdparty.io.netty.eventLoopThreads", 4);
+
+      conf.setInt(HConstants.MASTER_OPEN_REGION_THREADS, 6);
+      conf.setInt(HConstants.MASTER_CLOSE_REGION_THREADS, 6);
+      conf.setInt(HConstants.MASTER_SERVER_OPERATIONS_THREADS, 6);
+      conf.setInt(HConstants.MASTER_META_SERVER_OPERATIONS_THREADS, 6);
+      conf.setInt(HConstants.MASTER_LOG_REPLAY_OPS_THREADS, 6);
+
+
+      conf.setInt("hbase.hconnection.threads.max", 6);
+      conf.setInt("hbase.hconnection.threads.keepalivetime", 30000);
+
+      conf.setInt("hbase.htable.threads.max", 6);
+      conf.setInt("hbase.htable.threads.keepalivetime", 30);
+
+
+      conf.setInt(HConstants.REGION_SERVER_HANDLER_COUNT, 6);
+      conf.setInt("hbase.region.replica.replication.threads.max", 10);
+      conf.setInt("hbase.region.replica.replication.threads.core", 6);
+      conf.setInt("hbase.region.replica.replication.threads.keepalivetime", 15000);
+
+      conf.setInt("hbase.htable.threads.max", 6);
+      conf.setInt("hbase.htable.threads.keepalivetime", 30000);
+
+      conf.setInt("dfs.namenode.handler.count", 12);
+      conf.setInt("dfs.datanode.handler.count", 12);
+      conf.setInt("dfs.datanode.max.transfer.threads", 40); // has to be fairly high
+      conf.setInt("dfs.client.file-block-storage-locations.num-threads", 12);
+      conf.setInt("ipc.server.handler.queue.size", 5);
+      conf.setInt("ipc.server.read.connection-queue.size", 10);
+
+
+      // default is 15 min and sometimes we are waiting for that on test startup...
+      conf.setInt("hbase.snapshot.master.threads", 5);
+      conf.setInt("hbase.master.procedure.threads", 10);
+      conf.setInt("hbase.master.initializationmonitor.timeout", 10000);
+      conf.setInt("replication.executor.workers", 6);
+
+      conf.setInt("hbase.thrift.connection.max-idletime", 30000);
+      conf.setInt("hbase.thrift.connection.cleanup-interval", 10000);
+      conf.setInt("dfs.datanode.max.deletion.threads.per.volume", 1);
+      conf.setInt("dfs.datanode.fsdatasetcache.max.threads.per.volume", 3);
+
+      conf.setInt("hbase.rest.threads.max", 8);
+      conf.setInt("hbase.rest.threads.min", 2);
+
+      conf.setInt("hbase.ipc.server.max.callqueue.length", 6);
+      conf.setInt("hbase.ipc.server.priority.max.callqueue.length", 6);
+
+      conf.setInt( "hbase.ipc.server.read.threadpool.size", 6);
+
+    }
+
     return addHbaseResources(conf);
   }
 

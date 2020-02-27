@@ -161,15 +161,15 @@ public class FanOutOneBlockAsyncDFSOutput implements AsyncFSOutput {
 
   // this could be different from acked block length because a packet can not start at the middle of
   // a chunk.
-  private long nextPacketOffsetInBlock = 0L;
+  private volatile long nextPacketOffsetInBlock = 0L;
 
   // the length of the trailing partial chunk, this is because the packet start offset must be
   // aligned with the length of checksum chunk so we need to resend the same data.
-  private int trailingPartialChunkLength = 0;
+  private volatile int trailingPartialChunkLength = 0;
 
-  private long nextPacketSeqno = 0L;
+  private volatile long nextPacketSeqno = 0L;
 
-  private ByteBuf buf;
+  private volatile ByteBuf buf;
 
   private final SendBufSizePredictor sendBufSizePRedictor = new SendBufSizePredictor();
 
@@ -182,7 +182,7 @@ public class FanOutOneBlockAsyncDFSOutput implements AsyncFSOutput {
 
   // all lock-free to make it run faster
   private void completed(Channel channel) {
-    for (Iterator<Callback> iter = waitingAckQueue.iterator(); iter.hasNext();) {
+    for (Iterator<Callback> iter = waitingAckQueue.iterator(); iter.hasNext(); ) {
       Callback c = iter.next();
       // if the current unfinished replicas does not contain us then it means that we have already
       // acked this one, let's iterate to find the one we have not acked yet.
@@ -403,7 +403,7 @@ public class FanOutOneBlockAsyncDFSOutput implements AsyncFSOutput {
     waitingAckQueue.addLast(c);
     // recheck again after we pushed the callback to queue
     if (state != State.STREAMING && waitingAckQueue.peekFirst() == c) {
-      future.completeExceptionally(new IOException("stream already broken"));
+      future.completeExceptionally(new IOException("stream already broken " + state));
       // it's the one we have just pushed or just a no-op
       waitingAckQueue.removeFirst();
       return;
@@ -518,7 +518,7 @@ public class FanOutOneBlockAsyncDFSOutput implements AsyncFSOutput {
     Preconditions.checkState(waitingAckQueue.isEmpty(),
       "should call flush first before calling close");
     if (state != State.STREAMING) {
-      throw new IOException("stream already broken");
+      throw new IOException("stream already broken " + state);
     }
     state = State.CLOSING;
     long finalizedLength = ackedBlockLength;

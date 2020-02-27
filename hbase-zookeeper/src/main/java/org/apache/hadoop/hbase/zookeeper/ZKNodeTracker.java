@@ -159,7 +159,7 @@ public abstract class ZKNodeTracker extends ZKListener {
       }
       // We expect a notification; but we wait with a
       //  a timeout to lower the impact of a race condition if any
-      wait(100);
+      wait(250);
       remaining = timeout - (System.currentTimeMillis() - startTime);
     }
     return this.data;

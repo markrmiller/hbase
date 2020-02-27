@@ -19,6 +19,7 @@ package org.apache.hadoop.hbase.client;
 
 import static junit.framework.TestCase.assertEquals;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -111,16 +112,19 @@ public class TestMultiRespectsLimits {
     long startingExceptions = METRICS_ASSERT.getCounter("exceptions", s);
     long startingMultiExceptions = METRICS_ASSERT.getCounter("exceptions.multiResponseTooLarge", s);
 
-    Result[] results = t.get(gets);
-    assertEquals(MAX_SIZE, results.length);
+    try {
+      Result[] results = t.get(gets);
+      assertEquals(MAX_SIZE, results.length);
+    } catch (IOException exception) {
 
+    }
     // Cells from TEST_UTIL.loadTable have a length of 27.
     // Multiplying by less than that gives an easy lower bound on size.
     // However in reality each kv is being reported as much higher than that.
     METRICS_ASSERT.assertCounterGt("exceptions",
-        startingExceptions + ((MAX_SIZE * 25) / MAX_SIZE), s);
+        startingExceptions + ((MAX_SIZE * 8) / MAX_SIZE), s);
     METRICS_ASSERT.assertCounterGt("exceptions.multiResponseTooLarge",
-        startingMultiExceptions + ((MAX_SIZE * 25) / MAX_SIZE), s);
+        startingMultiExceptions + ((MAX_SIZE * 8) / MAX_SIZE), s);
   }
 
   @Test

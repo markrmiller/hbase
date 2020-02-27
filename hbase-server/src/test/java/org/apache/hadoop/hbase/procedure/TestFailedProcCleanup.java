@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
+import org.apache.hadoop.hbase.HBaseCommonTestingUtility;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.RegionInfo;
@@ -87,7 +88,20 @@ public class TestFailedProcCleanup {
       TEST_UTIL.createTable(TABLE, FAMILY);
     } catch (AccessDeniedException e) {
       LOG.debug("Ignoring exception: ", e);
-      Thread.sleep(evictionDelay * 3);
+      new HBaseCommonTestingUtility().waitFor(60000, 5000, () -> {
+        List<Procedure<MasterProcedureEnv>> procedureInfos =
+            TEST_UTIL.getMiniHBaseCluster().getMaster()
+                .getMasterProcedureExecutor().getProcedures();
+        for (Procedure procedureInfo : procedureInfos) {
+          if (procedureInfo.getProcName().equals("CreateTableProcedure")
+              && procedureInfo.getState() == ProcedureProtos.ProcedureState.ROLLEDBACK) {
+            return false;
+          }
+        }
+        return true;
+      });
+
+      return;
     }
     List<Procedure<MasterProcedureEnv>> procedureInfos =
         TEST_UTIL.getMiniHBaseCluster().getMaster().getMasterProcedureExecutor().getProcedures();

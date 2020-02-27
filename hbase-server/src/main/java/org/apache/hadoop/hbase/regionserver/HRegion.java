@@ -297,7 +297,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
       new ConcurrentSkipListMap<>(Bytes.BYTES_RAWCOMPARATOR);
 
   // TODO: account for each registered handler in HeapSize computation
-  private Map<String, com.google.protobuf.Service> coprocessorServiceHandlers = Maps.newHashMap();
+  private Map<String, com.google.protobuf.Service> coprocessorServiceHandlers = new ConcurrentHashMap<>();
 
   // Track data size in all memstores
   private final MemStoreSizing memStoreSizing = new ThreadSafeMemStoreSizing();

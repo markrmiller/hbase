@@ -66,6 +66,8 @@ public final class HBaseClassTestRule implements TestRule {
 
   private final Timeout timeout;
 
+  private final CleanUpRule cleanUpRule = new CleanUpRule();
+
   private HBaseClassTestRule(Class<?> clazz, Timeout timeout) {
     this.clazz = clazz;
     this.timeout = timeout;
@@ -161,6 +163,7 @@ public final class HBaseClassTestRule implements TestRule {
 
   @Override
   public Statement apply(Statement base, Description description) {
-    return timeout.apply(base, description);
+    Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
+    return timeout.apply(cleanUpRule.apply(base, description), description);
   }
 }
