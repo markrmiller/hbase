@@ -17,9 +17,9 @@
  */
 package org.apache.hadoop.hbase.ipc;
 
-import static org.apache.hadoop.hbase.ipc.TestProtobufRpcServiceImpl.SERVICE;
-import static org.apache.hadoop.hbase.ipc.TestProtobufRpcServiceImpl.newBlockingStub;
-import static org.apache.hadoop.hbase.ipc.TestProtobufRpcServiceImpl.newStub;
+import static org.apache.hadoop.hbase.ipc.ProtobufRpcServiceTestImpl.SERVICE;
+import static org.apache.hadoop.hbase.ipc.ProtobufRpcServiceTestImpl.newBlockingStub;
+import static org.apache.hadoop.hbase.ipc.ProtobufRpcServiceTestImpl.newStub;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -418,7 +418,7 @@ public abstract class AbstractTestIPC {
         assertTrue(pcrc.failed());
         LOG.info("Caught expected exception: " + pcrc.getFailed());
         IOException ioe = ProtobufUtil.handleRemoteException(pcrc.getFailed());
-        assertTrue(ioe.getCause() instanceof CallTimeoutException);
+        assertTrue(ioe.getCause().getClass().getName(), ioe.getCause() instanceof CallTimeoutException);
       }
       // confirm that we got exception before the actual pause.
       assertTrue(waitTime < ms);

@@ -51,6 +51,8 @@ public abstract class AcidGuaranteesTestBase {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
+    System.setProperty("acid.testtool.maxthreads", "15");
+    System.setProperty("acid.testtool.corehreads", "5");
     // Set small flush size for minicluster so we exercise reseeking scanners
     Configuration conf = UTIL.getConfiguration();
     conf.set(HConstants.HREGION_MEMSTORE_FLUSH_SIZE, String.valueOf(128 * 1024));
@@ -64,6 +66,8 @@ public abstract class AcidGuaranteesTestBase {
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
     UTIL.shutdownMiniCluster();
+    System.clearProperty("acid.testtool.maxthreads");
+    System.clearProperty("acid.testtool.corehreads");
   }
 
   @Before

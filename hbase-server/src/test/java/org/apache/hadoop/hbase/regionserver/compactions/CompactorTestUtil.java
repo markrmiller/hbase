@@ -55,7 +55,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-public class TestCompactor {
+public class CompactorTestUtil {
 
   public static HStoreFile createDummyStoreFile(long maxSequenceId) throws Exception {
     // "Files" are totally unused, it's Scanner class below that gives compactor fake KVs.

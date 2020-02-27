@@ -18,10 +18,14 @@
 
 package org.apache.hadoop.hbase;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import org.apache.hadoop.hbase.client.HRegionLocator;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.RegionReplicaUtil;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -42,7 +46,7 @@ public class RegionLocations implements Iterable<HRegionLocation> {
   // elements can be null if the region replica is not known at all. A null value indicates
   // that there is a region replica with the index as replicaId, but the location is not known
   // in the cache.
-  private final HRegionLocation[] locations; // replicaId -> HRegionLocation.
+  private final AtomicReferenceArray<HRegionLocation> locations; // replicaId -> HRegionLocation.
 
   /**
    * Constructs the region location list. The locations array should
@@ -69,20 +73,22 @@ public class RegionLocations implements Iterable<HRegionLocation> {
     maxReplicaId = maxReplicaId + (locations.length - (maxReplicaIdIndex + 1) );
 
     if (maxReplicaId + 1 == locations.length) {
-      this.locations = locations;
+      this.locations = new AtomicReferenceArray<>(locations);
     } else {
-      this.locations = new HRegionLocation[maxReplicaId + 1];
+      this.locations = new AtomicReferenceArray<>(new HRegionLocation[maxReplicaId + 1]);
       for (HRegionLocation loc : locations) {
         if (loc != null) {
-          this.locations[loc.getRegion().getReplicaId()] = loc;
+          this.locations.set(loc.getRegion().getReplicaId(), loc);
         }
       }
     }
-    for (HRegionLocation loc : this.locations) {
+    for (int i = 0; i < this.locations.length(); i++) {
+      HRegionLocation loc = this.locations.get(i);
       if (loc != null && loc.getServerName() != null){
         numNonNullElements++;
       }
     }
+
     this.numNonNullElements = numNonNullElements;
   }
 
@@ -96,7 +102,7 @@ public class RegionLocations implements Iterable<HRegionLocation> {
    * @return the size of the list (corresponding to the max replicaId)
    */
   public int size() {
-    return locations.length;
+    return locations.length();
   }
 
   /**
@@ -124,16 +130,21 @@ public class RegionLocations implements Iterable<HRegionLocation> {
    */
   public RegionLocations removeByServer(ServerName serverName) {
     HRegionLocation[] newLocations = null;
-    for (int i = 0; i < locations.length; i++) {
+    for (int i = 0; i < locations.length(); i++) {
       // check whether something to remove
-      if (locations[i] != null && serverName.equals(locations[i].getServerName())) {
+      if (locations.get(i)!= null && serverName.equals(locations.get(i).getServerName())) {
         if (newLocations == null) { //first time
-          newLocations = new HRegionLocation[locations.length];
-          System.arraycopy(locations, 0, newLocations, 0, i);
+          newLocations = new HRegionLocation[locations.length()];
+          HRegionLocation[] regionLocationArray = new HRegionLocation[locations.length()];
+          for (int j = 0; j < locations.length(); j++) {
+            HRegionLocation loc = locations.get(j);
+            regionLocationArray[j] = loc;
+          }
+          System.arraycopy(regionLocationArray, 0, newLocations, 0, i);
         }
         newLocations[i] = null;
       } else if (newLocations != null) {
-        newLocations[i] = locations[i];
+        newLocations[i] = locations.get(i);
       }
     }
     return newLocations == null ? this : new RegionLocations(newLocations);
@@ -149,18 +160,23 @@ public class RegionLocations implements Iterable<HRegionLocation> {
     if (location == null) return this;
     if (location.getRegion() == null) return this;
     int replicaId = location.getRegion().getReplicaId();
-    if (replicaId >= locations.length) return this;
+    if (replicaId >= locations.length()) return this;
 
     // check whether something to remove. HRL.compareTo() compares ONLY the
     // serverName. We want to compare the HRI's as well.
-    if (locations[replicaId] == null
-        || RegionInfo.COMPARATOR.compare(location.getRegion(), locations[replicaId].getRegion()) != 0
-        || !location.equals(locations[replicaId])) {
+    if (locations.get(replicaId) == null
+        || RegionInfo.COMPARATOR.compare(location.getRegion(), locations.get(replicaId).getRegion()) != 0
+        || !location.equals(locations.get(replicaId))) {
       return this;
     }
 
-    HRegionLocation[] newLocations = new HRegionLocation[locations.length];
-    System.arraycopy(locations, 0, newLocations, 0, locations.length);
+    HRegionLocation[] newLocations = new HRegionLocation[locations.length()];
+    HRegionLocation[] regionLocationArray = new HRegionLocation[locations.length()];
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
+      regionLocationArray[i] = loc;
+    }
+    System.arraycopy(regionLocationArray, 0, newLocations, 0, locations.length());
     newLocations[replicaId] = null;
 
     return new RegionLocations(newLocations);
@@ -177,9 +193,13 @@ public class RegionLocations implements Iterable<HRegionLocation> {
       return this;
     }
 
-    HRegionLocation[] newLocations = new HRegionLocation[locations.length];
-
-    System.arraycopy(locations, 0, newLocations, 0, locations.length);
+    HRegionLocation[] newLocations = new HRegionLocation[locations.length()];
+    HRegionLocation[] regionLocationArray = new HRegionLocation[locations.length()];
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
+      regionLocationArray[i] = loc;
+    }
+    System.arraycopy(regionLocationArray, 0, newLocations, 0, locations.length());
     if (replicaId < newLocations.length) {
       newLocations[replicaId] = null;
     }
@@ -192,12 +212,12 @@ public class RegionLocations implements Iterable<HRegionLocation> {
    * elements are removed.
    */
   public RegionLocations removeElementsWithNullLocation() {
-    HRegionLocation[] newLocations = new HRegionLocation[locations.length];
+    HRegionLocation[] newLocations = new HRegionLocation[locations.length()];
     boolean hasNonNullElement = false;
-    for (int i = 0; i < locations.length; i++) {
-      if (locations[i] != null && locations[i].getServerName() != null) {
+    for (int i = 0; i < locations.length(); i++) {
+      if (locations.get(i) != null && locations.get(i).getServerName() != null) {
         hasNonNullElement = true;
-        newLocations[i] = locations[i];
+        newLocations[i] = locations.get(i);
       }
     }
     return hasNonNullElement ? new RegionLocations(newLocations) : null;
@@ -219,7 +239,7 @@ public class RegionLocations implements Iterable<HRegionLocation> {
 
     // Use the length from other, since it is coming from meta. Otherwise,
     // in case of region replication going down, we might have a leak here.
-    int max = other.locations.length;
+    int max = other.locations.length();
 
     RegionInfo regionInfo = null;
     for (int i = 0; i < max; i++) {
@@ -237,7 +257,12 @@ public class RegionLocations implements Iterable<HRegionLocation> {
       if (selectedLoc != thisLoc) {
         if (newLocations == null) {
           newLocations = new HRegionLocation[max];
-          System.arraycopy(locations, 0, newLocations, 0, i);
+          HRegionLocation[] regionLocationArray = new HRegionLocation[locations.length()];
+          for (int j = 0; j < locations.length(); j++) {
+            HRegionLocation loc = locations.get(j);
+            regionLocationArray[j] = loc;
+          }
+          System.arraycopy(regionLocationArray, 0, newLocations, 0, i);
         }
       }
       if (newLocations != null) {
@@ -300,8 +325,13 @@ public class RegionLocations implements Iterable<HRegionLocation> {
     if (selectedLoc == oldLoc) {
       return this;
     }
-    HRegionLocation[] newLocations = new HRegionLocation[Math.max(locations.length, replicaId +1)];
-    System.arraycopy(locations, 0, newLocations, 0, locations.length);
+    HRegionLocation[] newLocations = new HRegionLocation[Math.max(locations.length(), replicaId +1)];
+    HRegionLocation[] regionLocationArray = new HRegionLocation[locations.length()];
+    for (int j = 0; j < locations.length(); j++) {
+      HRegionLocation loc = locations.get(j);
+      regionLocationArray[j] = loc;
+    }
+    System.arraycopy(regionLocationArray, 0, newLocations, 0, locations.length());
     newLocations[replicaId] = location;
     // ensure that all replicas share the same start code. Otherwise delete them
     for (int i=0; i < newLocations.length; i++) {
@@ -320,10 +350,10 @@ public class RegionLocations implements Iterable<HRegionLocation> {
   }
 
   public HRegionLocation getRegionLocation(int replicaId) {
-    if (replicaId >= locations.length) {
+    if (replicaId >= locations.length()) {
       return null;
     }
-    return locations[replicaId];
+    return locations.get(replicaId);
   }
 
   /**
@@ -333,7 +363,8 @@ public class RegionLocations implements Iterable<HRegionLocation> {
    * @return HRegionLocation found or null
    */
   public HRegionLocation getRegionLocationByRegionName(byte[] regionName) {
-    for (HRegionLocation loc : locations) {
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
       if (loc != null) {
         if (Bytes.equals(loc.getRegion().getRegionName(), regionName)
             || Bytes.equals(loc.getRegion().getEncodedNameAsBytes(), regionName)) {
@@ -345,18 +376,24 @@ public class RegionLocations implements Iterable<HRegionLocation> {
   }
 
   public HRegionLocation[] getRegionLocations() {
-    return locations;
+    HRegionLocation[] regionLocationArray = new HRegionLocation[locations.length()];
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
+      regionLocationArray[i] = loc;
+    }
+    return regionLocationArray;
   }
 
   public HRegionLocation getDefaultRegionLocation() {
-    return locations[RegionInfo.DEFAULT_REPLICA_ID];
+    return locations.get(RegionInfo.DEFAULT_REPLICA_ID);
   }
 
   /**
    * Returns the first not-null region location in the list
    */
   public HRegionLocation getRegionLocation() {
-    for (HRegionLocation loc : locations) {
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
       if (loc != null) {
         return loc;
       }
@@ -366,13 +403,20 @@ public class RegionLocations implements Iterable<HRegionLocation> {
 
   @Override
   public Iterator<HRegionLocation> iterator() {
-    return Arrays.asList(locations).iterator();
+    List<HRegionLocation> regionLocatorList = new ArrayList<>(locations.length());
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
+      regionLocatorList.add(loc);
+    }
+
+    return regionLocatorList.iterator();
   }
 
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder("[");
-    for (HRegionLocation loc : locations) {
+    for (int i = 0; i < locations.length(); i++) {
+      HRegionLocation loc = locations.get(i);
       if (builder.length() > 1) {
         builder.append(", ");
       }

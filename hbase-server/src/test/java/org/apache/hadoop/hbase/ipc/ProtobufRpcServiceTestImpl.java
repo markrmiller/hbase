@@ -45,10 +45,10 @@ import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.hbase.util.Threads;
 
 @InterfaceAudience.Private
-public class TestProtobufRpcServiceImpl implements BlockingInterface {
+public class ProtobufRpcServiceTestImpl implements BlockingInterface {
 
   public static final BlockingService SERVICE = TestProtobufRpcProto
-      .newReflectiveBlockingService(new TestProtobufRpcServiceImpl());
+      .newReflectiveBlockingService(new ProtobufRpcServiceTestImpl());
 
   public static BlockingInterface newBlockingStub(RpcClient client, InetSocketAddress addr)
       throws IOException {

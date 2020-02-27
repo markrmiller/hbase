@@ -21,7 +21,7 @@ import java.io.IOException;
 import org.apache.hadoop.hbase.TableName;
 import org.junit.Test;
 
-public class CloneSnapshotFromClientCloneLinksAfterDeleteTestBase
+public abstract class CloneSnapshotFromClientCloneLinksAfterDeleteTestBase
     extends CloneSnapshotFromClientTestBase {
 
   /**

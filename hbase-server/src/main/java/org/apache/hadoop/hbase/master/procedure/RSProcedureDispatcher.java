@@ -241,7 +241,7 @@ public class RSProcedureDispatcher
           LOG.warn("waiting a little before trying on the same server={}," +
             " try={}, can wait up to {}ms", serverName, numberOfAttemptsSoFar, remainingTime);
           numberOfAttemptsSoFar++;
-          submitTask(this, 100, TimeUnit.MILLISECONDS);
+          submitTask(this, 250, TimeUnit.MILLISECONDS);
           return true;
         }
         LOG.warn("server {} is not up for a while; try a new one", serverName);

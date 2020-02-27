@@ -1098,19 +1098,18 @@ class RawAsyncHBaseAdmin implements AsyncAdmin {
     if (TableName.META_TABLE_NAME.equals(tableName)) {
       CompletableFuture<List<HRegionLocation>> future = new CompletableFuture<>();
       // For meta table, we use zk to fetch all locations.
-      AsyncRegistry registry = AsyncRegistryFactory.getRegistry(connection.getConfiguration());
-      addListener(registry.getMetaRegionLocation(), (metaRegions, err) -> {
-        if (err != null) {
-          future.completeExceptionally(err);
-        } else if (metaRegions == null || metaRegions.isEmpty() ||
-          metaRegions.getDefaultRegionLocation() == null) {
-          future.completeExceptionally(new IOException("meta region does not found"));
-        } else {
-          future.complete(Collections.singletonList(metaRegions.getDefaultRegionLocation()));
-        }
-        // close the registry.
-        IOUtils.closeQuietly(registry);
-      });
+      try (AsyncRegistry registry = AsyncRegistryFactory.getRegistry(connection.getConfiguration())) {
+        addListener(registry.getMetaRegionLocation(), (metaRegions, err) -> {
+          if (err != null) {
+            future.completeExceptionally(err);
+          } else if (metaRegions == null || metaRegions.isEmpty()
+              || metaRegions.getDefaultRegionLocation() == null) {
+            future.completeExceptionally(new IOException("meta region does not found"));
+          } else {
+            future.complete(Collections.singletonList(metaRegions.getDefaultRegionLocation()));
+          }
+        });
+      }
       return future;
     } else {
       // For non-meta table, we fetch all locations by scanning hbase:meta table

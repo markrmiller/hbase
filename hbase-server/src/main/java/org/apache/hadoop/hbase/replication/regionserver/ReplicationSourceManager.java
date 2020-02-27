@@ -181,7 +181,7 @@ public class ReplicationSourceManager implements ReplicationListener {
     this.server = server;
     this.walsById = new ConcurrentHashMap<>();
     this.walsByIdRecoveredQueues = new ConcurrentHashMap<>();
-    this.oldsources = new ArrayList<>();
+    this.oldsources = Collections.synchronizedList(new ArrayList<>());
     this.conf = conf;
     this.fs = fs;
     this.logDir = logDir;

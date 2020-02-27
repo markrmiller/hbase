@@ -128,8 +128,8 @@ public class MiniHBaseCluster extends HBaseCluster {
    * the FileSystem system exit hook does.
    */
   public static class MiniHBaseClusterRegionServer extends HRegionServer {
-    private Thread shutdownThread = null;
-    private User user = null;
+    private volatile Thread shutdownThread = null;
+    private final User user;
     /**
      * List of RegionServers killed so far. ServerName also comprises startCode of a server,
      * so any restarted instances of the same server will have different ServerName and will not
@@ -668,7 +668,7 @@ public class MiniHBaseCluster extends HBaseCluster {
         }
       }
 
-      Threads.sleep(100);
+      Threads.sleep(250);
     }
     return false;
   }

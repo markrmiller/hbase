@@ -226,7 +226,7 @@ public class JVMClusterUtil {
       }
 
       try {
-        Thread.sleep(100);
+        Thread.sleep(250);
       } catch (InterruptedException e) {
         throw (InterruptedIOException)new InterruptedIOException().initCause(e);
       }
@@ -295,7 +295,7 @@ public class JVMClusterUtil {
       }
 
       // Let's try to interrupt the remaining threads if any.
-      for (int i = 0; i < 100; ++i) {
+      for (int i = 0; i < 50; ++i) {
         boolean atLeastOneLiveServer = false;
         for (RegionServerThread t : regionservers) {
           if (t.isAlive()) {

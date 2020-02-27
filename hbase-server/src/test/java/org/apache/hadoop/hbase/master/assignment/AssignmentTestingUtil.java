@@ -45,8 +45,9 @@ public final class AssignmentTestingUtil {
 
   public static void waitForRegionToBeInTransition(final HBaseTestingUtility util,
       final RegionInfo hri) throws Exception {
-    while (!getMaster(util).getAssignmentManager().getRegionStates().isRegionInTransition(hri)) {
-      Threads.sleep(10);
+    while (getMaster(util) == null || getMaster(util).getAssignmentManager() == null ||
+        !getMaster(util).getAssignmentManager().getRegionStates().isRegionInTransition(hri)) {
+      Threads.sleep(250);
     }
   }
 

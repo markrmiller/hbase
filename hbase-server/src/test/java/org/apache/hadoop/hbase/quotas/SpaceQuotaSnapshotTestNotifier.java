@@ -29,9 +29,9 @@ import org.apache.hadoop.hbase.client.Connection;
  * A SpaceQuotaSnapshotNotifier implementation for testing.
  */
 @InterfaceAudience.Private
-public class SpaceQuotaSnapshotNotifierForTest implements SpaceQuotaSnapshotNotifier {
+public class SpaceQuotaSnapshotTestNotifier implements SpaceQuotaSnapshotNotifier {
   private static final Logger LOG =
-      LoggerFactory.getLogger(SpaceQuotaSnapshotNotifierForTest.class);
+      LoggerFactory.getLogger(SpaceQuotaSnapshotTestNotifier.class);
 
   private final Map<TableName,SpaceQuotaSnapshot> tableQuotaSnapshots = new HashMap<>();
 

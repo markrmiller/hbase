@@ -134,7 +134,7 @@ public final class Waiter {
    */
   public static <E extends Exception> long waitFor(Configuration conf, long timeout,
       Predicate<E> predicate) {
-    return waitFor(conf, timeout, 100, true, predicate);
+    return waitFor(conf, timeout, 250, true, predicate);
   }
 
   /**

@@ -120,6 +120,9 @@ public class TestConnectionImplementation {
     TEST_UTIL.getConfiguration().setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 10);
     TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, RPC_RETRY);
     TEST_UTIL.getConfiguration().setInt(HConstants.REGION_SERVER_HANDLER_COUNT, 3);
+    TEST_UTIL.getConfiguration().setInt("hbase.regionserver.hlog.sync.timeout", 5000);
+
+
     TEST_UTIL.startMiniCluster(2);
 
   }

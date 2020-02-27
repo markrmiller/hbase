@@ -180,8 +180,8 @@ public class TestReplicationBase {
     conf.setLong("replication.source.sleepforretries", 100);
     conf.setInt("hbase.regionserver.maxlogs", 10);
     conf.setLong("hbase.master.logcleaner.ttl", 10);
-    conf.setInt("zookeeper.recovery.retry", 1);
-    conf.setInt("zookeeper.recovery.retry.intervalmill", 10);
+    conf.setInt("zookeeper.recovery.retry", 3);
+    conf.setInt("zookeeper.recovery.retry.intervalmill", 300);
     conf.setLong(HConstants.THREAD_WAKE_FREQUENCY, 100);
     conf.setInt("replication.stats.thread.period.seconds", 5);
     conf.setBoolean("hbase.tests.use.shortcircuit.reads", false);

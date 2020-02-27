@@ -101,13 +101,13 @@ public class TestHFileBlock {
   static final Compression.Algorithm[] COMPRESSION_ALGORITHMS = { NONE, GZ };
 
   private static final int NUM_TEST_BLOCKS = 1000;
-  private static final int NUM_READER_THREADS = 26;
+  private static final int NUM_READER_THREADS = 13;
   private static final int MAX_BUFFER_COUNT = 2048;
 
   // Used to generate KeyValues
-  private static int NUM_KEYVALUES = 50;
+  private static int NUM_KEYVALUES = 30;
   private static int FIELD_LENGTH = 10;
-  private static float CHANCE_TO_REPEAT = 0.6f;
+  private static float CHANCE_TO_REPEAT = 0.3f;
 
   private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
   private FileSystem fs;

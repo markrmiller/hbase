@@ -18,7 +18,7 @@
 package org.apache.hadoop.hbase.regionserver.compactions;
 
 import static org.apache.hadoop.hbase.regionserver.StripeStoreFileManager.OPEN_KEY;
-import static org.apache.hadoop.hbase.regionserver.compactions.TestCompactor.createDummyRequest;
+import static org.apache.hadoop.hbase.regionserver.compactions.CompactorTestUtil.createDummyRequest;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -46,8 +46,8 @@ import org.apache.hadoop.hbase.regionserver.InternalScanner;
 import org.apache.hadoop.hbase.regionserver.ScanInfo;
 import org.apache.hadoop.hbase.regionserver.ScanType;
 import org.apache.hadoop.hbase.regionserver.StoreFileScanner;
-import org.apache.hadoop.hbase.regionserver.compactions.TestCompactor.Scanner;
-import org.apache.hadoop.hbase.regionserver.compactions.TestCompactor.StoreFileWritersCapture;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactorTestUtil.Scanner;
+import org.apache.hadoop.hbase.regionserver.compactions.CompactorTestUtil.StoreFileWritersCapture;
 import org.apache.hadoop.hbase.regionserver.throttle.NoLimitThroughputController;
 import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;

@@ -17,8 +17,8 @@
  */
 package org.apache.hadoop.hbase.security;
 
-import static org.apache.hadoop.hbase.ipc.TestProtobufRpcServiceImpl.SERVICE;
-import static org.apache.hadoop.hbase.ipc.TestProtobufRpcServiceImpl.newBlockingStub;
+import static org.apache.hadoop.hbase.ipc.ProtobufRpcServiceTestImpl.SERVICE;
+import static org.apache.hadoop.hbase.ipc.ProtobufRpcServiceTestImpl.newBlockingStub;
 import static org.apache.hadoop.hbase.security.HBaseKerberosUtils.getKeytabFileForTesting;
 import static org.apache.hadoop.hbase.security.HBaseKerberosUtils.getPrincipalForTesting;
 import static org.apache.hadoop.hbase.security.HBaseKerberosUtils.getSecuredConfiguration;

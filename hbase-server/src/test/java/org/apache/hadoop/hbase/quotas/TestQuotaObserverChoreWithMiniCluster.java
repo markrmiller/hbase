@@ -80,7 +80,7 @@ public class TestQuotaObserverChoreWithMiniCluster {
 
   private HMaster master;
   private QuotaObserverChore chore;
-  private SpaceQuotaSnapshotNotifierForTest snapshotNotifier;
+  private SpaceQuotaSnapshotTestNotifier snapshotNotifier;
   private SpaceQuotaHelperForTests helper;
 
   @BeforeClass
@@ -88,7 +88,7 @@ public class TestQuotaObserverChoreWithMiniCluster {
     Configuration conf = TEST_UTIL.getConfiguration();
     SpaceQuotaHelperForTests.updateConfigForQuotas(conf);
     conf.setClass(SpaceQuotaSnapshotNotifierFactory.SNAPSHOT_NOTIFIER_KEY,
-        SpaceQuotaSnapshotNotifierForTest.class, SpaceQuotaSnapshotNotifier.class);
+        SpaceQuotaSnapshotTestNotifier.class, SpaceQuotaSnapshotNotifier.class);
     TEST_UTIL.startMiniCluster(1);
   }
 
@@ -114,7 +114,7 @@ public class TestQuotaObserverChoreWithMiniCluster {
 
     master = TEST_UTIL.getMiniHBaseCluster().getMaster();
     snapshotNotifier =
-        (SpaceQuotaSnapshotNotifierForTest) master.getSpaceQuotaSnapshotNotifier();
+        (SpaceQuotaSnapshotTestNotifier) master.getSpaceQuotaSnapshotNotifier();
     assertNotNull(snapshotNotifier);
     snapshotNotifier.clearSnapshots();
     chore = master.getQuotaObserverChore();

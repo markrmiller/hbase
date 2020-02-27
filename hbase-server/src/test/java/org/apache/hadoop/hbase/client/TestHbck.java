@@ -343,6 +343,6 @@ public class TestHbck {
   }
 
   private void waitOnPids(List<Long> pids) {
-    TEST_UTIL.waitFor(60000, () -> pids.stream().allMatch(procExec::isFinished));
+    TEST_UTIL.waitFor(30000, () -> pids.stream().allMatch(procExec::isFinished));
   }
 }

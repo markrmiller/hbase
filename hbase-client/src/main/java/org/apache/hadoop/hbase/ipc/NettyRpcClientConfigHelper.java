@@ -24,6 +24,7 @@ import org.apache.hbase.thirdparty.io.netty.channel.EventLoopGroup;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.*;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -45,8 +46,8 @@ public class NettyRpcClientConfigHelper {
 
   private static final String CONFIG_NAME = "global-event-loop";
 
-  private static final Map<String, Pair<EventLoopGroup, Class<? extends Channel>>>
-    EVENT_LOOP_CONFIG_MAP = new HashMap<>();
+  public static final Map<String, Pair<EventLoopGroup, Class<? extends Channel>>>
+    EVENT_LOOP_CONFIG_MAP = new ConcurrentHashMap<>();
 
   /**
    * Set the EventLoopGroup and channel class for {@code AsyncRpcClient}.

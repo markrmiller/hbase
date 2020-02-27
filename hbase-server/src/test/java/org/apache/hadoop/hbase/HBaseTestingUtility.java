@@ -316,6 +316,10 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
     this(HBaseConfiguration.create());
   }
 
+  public HBaseTestingUtility(boolean useLowResources) {
+    this(HBaseConfiguration.create(useLowResources));
+  }
+
   /**
    * <p>Create an HBaseTestingUtility using a given configuration.
    *
@@ -3621,7 +3625,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
       try (final Table meta = getConnection().getTable(TableName.META_TABLE_NAME)) {
         LOG.debug("Waiting until all regions of table " + tableName + " get assigned. Timeout = " +
             timeout + "ms");
-        waitFor(timeout, 200, true, new ExplainingPredicate<IOException>() {
+        waitFor(timeout, 250, true, new ExplainingPredicate<IOException>() {
           @Override
           public String explainFailure() throws IOException {
             return explainTableAvailability(tableName);
