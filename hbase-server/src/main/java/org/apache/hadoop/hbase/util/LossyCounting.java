@@ -19,12 +19,11 @@
 
 package org.apache.hadoop.hbase.util;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
@@ -45,7 +44,7 @@ import org.apache.hbase.thirdparty.com.google.common.util.concurrent.ThreadFacto
  * http://www.vldb.org/conf/2002/S10P03.pdf
  */
 @InterfaceAudience.Private
-public class LossyCounting<T> {
+public class LossyCounting<T> implements Closeable {
   private static final Logger LOG = LoggerFactory.getLogger(LossyCounting.class);
   private final ExecutorService executor;
   private long bucketSize;
@@ -95,6 +94,15 @@ public class LossyCounting<T> {
     //update totalDataCount and term
     totalDataCount++;
     calculateCurrentTerm();
+  }
+
+  public void close() {
+//    executor.shutdownNow();
+//    try {
+//      executor.awaitTermination(30, TimeUnit.SECONDS);
+//    } catch (InterruptedException e) {
+//      Thread.currentThread().interrupt();
+//    }
   }
 
   public void add(T key) {

@@ -158,6 +158,12 @@ public class TestLoadIncrementalHFilesSplitRecovery {
       LOG.info("Creating table " + table);
       try (Admin admin = connection.getAdmin()) {
         admin.createTable(createTableDesc(table, cfs));
+        try {
+          util.waitTableAvailable(table, 30000);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new RuntimeException(e);
+        }
       }
     } catch (TableExistsException tee) {
       LOG.info("Table " + table + " already exists");
@@ -242,7 +248,7 @@ public class TestLoadIncrementalHFilesSplitRecovery {
 
   @BeforeClass
   public static void setupCluster() throws Exception {
-    util = new HBaseTestingUtility();
+    util = new HBaseTestingUtility(false);
     util.getConfiguration().set(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY, "");
     util.startMiniCluster(1);
   }
@@ -399,6 +405,8 @@ public class TestLoadIncrementalHFilesSplitRecovery {
       populateTable(connection, table, 1);
       assertExpectedTable(table, ROWCOUNT, 1);
 
+      util.waitUntilNoRegionsInTransition(10000);
+
       // Now let's cause trouble. This will occur after checks and cause bulk
       // files to fail when attempt to atomically import. This is recoverable.
       final AtomicInteger attemptedCalls = new AtomicInteger();
@@ -479,6 +487,8 @@ public class TestLoadIncrementalHFilesSplitRecovery {
    */
   @Test
   public void testSplitTmpFileCleanUp() throws Exception {
+    util.getHBaseCluster().waitForActiveAndReadyMaster(15000);
+    util.waitUntilNoRegionsInTransition();
     final TableName table = TableName.valueOf(name.getMethodName());
     byte[][] SPLIT_KEYS = new byte[][] { Bytes.toBytes("row_00000010"),
         Bytes.toBytes("row_00000020"), Bytes.toBytes("row_00000030"), Bytes.toBytes("row_00000040"),

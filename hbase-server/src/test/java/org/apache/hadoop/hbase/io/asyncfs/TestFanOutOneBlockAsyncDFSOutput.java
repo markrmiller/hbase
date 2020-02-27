@@ -71,7 +71,7 @@ public class TestFanOutOneBlockAsyncDFSOutput {
 
   private static final Logger LOG = LoggerFactory.getLogger(TestFanOutOneBlockAsyncDFSOutput.class);
 
-  private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
+  private static final HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility(false);
 
   private static DistributedFileSystem FS;
 
@@ -173,11 +173,13 @@ public class TestFanOutOneBlockAsyncDFSOutput {
   public void testHeartbeat() throws IOException, InterruptedException, ExecutionException {
     Path f = new Path("/" + name.getMethodName());
     EventLoop eventLoop = EVENT_LOOP_GROUP.next();
-    FanOutOneBlockAsyncDFSOutput out = FanOutOneBlockAsyncDFSOutputHelper.createOutput(FS, f, true,
-      false, (short) 3, FS.getDefaultBlockSize(), eventLoop, CHANNEL_CLASS);
-    Thread.sleep(READ_TIMEOUT_MS * 2);
-    // the connection to datanode should still alive.
-    writeAndVerify(FS, f, out);
+    try (FanOutOneBlockAsyncDFSOutput out = FanOutOneBlockAsyncDFSOutputHelper
+        .createOutput(FS, f, true, false, (short) 3, FS.getDefaultBlockSize(), eventLoop,
+            CHANNEL_CLASS)) {
+      Thread.sleep(READ_TIMEOUT_MS * 2);
+      // the connection to datanode should still alive.
+      writeAndVerify(FS, f, out);
+    }
   }
 
   /**

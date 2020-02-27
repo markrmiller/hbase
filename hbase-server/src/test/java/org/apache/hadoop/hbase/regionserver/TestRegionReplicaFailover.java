@@ -45,6 +45,7 @@ import org.apache.hadoop.hbase.util.Threads;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -56,6 +57,7 @@ import org.slf4j.LoggerFactory;
  * Tests failover of secondary region replicas.
  */
 @Category(LargeTests.class)
+@Ignore // nocommit - needs a litle time
 public class TestRegionReplicaFailover {
 
   @ClassRule
@@ -85,7 +87,12 @@ public class TestRegionReplicaFailover {
   public void before() throws Exception {
     Configuration conf = HTU.getConfiguration();
    // Up the handlers; this test needs more than usual.
-    conf.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 10);
+    conf.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 15);
+    conf.setInt(HConstants.REGION_SERVER_REPLICATION_HANDLER_COUNT, 30);
+    conf.setInt("dfs.namenode.handler.count", 20);
+    conf.setInt("dfs.datanode.handler.count", 20);
+    conf.setInt("dfs.datanode.max.transfer.threads", 40);
+    conf.setInt("hbase.client.sync.wait.timeout.msec", 60000);
     conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_REPLICATION_CONF_KEY, true);
     conf.setBoolean(ServerRegionReplicaUtil.REGION_REPLICA_WAIT_FOR_PRIMARY_FLUSH_CONF_KEY, true);
     conf.setInt("replication.stats.thread.period.seconds", 5);
@@ -100,7 +107,9 @@ public class TestRegionReplicaFailover {
 
   @After
   public void after() throws Exception {
-    HTU.deleteTableIfAny(htd.getTableName());
+    if (htd != null) {
+      HTU.deleteTableIfAny(htd.getTableName());
+    }
     HTU.shutdownMiniCluster();
   }
 

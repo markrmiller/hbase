@@ -63,7 +63,7 @@ public class TestMemStoreLAB {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    ChunkCreator.initialize(1 * 1024, false, 50 * 1024000L, 0.2f,
+    ChunkCreator.initialize(1 * 1024, false, 20 * 1024000L, 0.2f,
         MemStoreLAB.POOL_INITIAL_SIZE_DEFAULT, null);
   }
 
@@ -86,10 +86,10 @@ public class TestMemStoreLAB {
     int expectedOff = 0;
     ByteBuffer lastBuffer = null;
     int lastChunkId = -1;
-    // 100K iterations by 0-1K alloc -> 50MB expected
+    // 50K iterations by 0-1K alloc -> 20MB expected
     // should be reasonable for unit test and also cover wraparound
     // behavior
-    for (int i = 0; i < 100000; i++) {
+    for (int i = 0; i < 50000; i++) {
       int valSize = rand.nextInt(3);
       KeyValue kv = new KeyValue(rk, cf, q, new byte[valSize]);
       int size = kv.getSerializedSize();
@@ -153,7 +153,7 @@ public class TestMemStoreLAB {
     }
 
     ctx.startThreads();
-    while (totalAllocated.get() < 50*1024*1000 && ctx.shouldRun()) {
+    while (totalAllocated.get() < 20*1024*1000 && ctx.shouldRun()) {
       Thread.sleep(10);
     }
     ctx.stop();

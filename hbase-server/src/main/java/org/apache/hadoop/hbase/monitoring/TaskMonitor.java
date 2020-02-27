@@ -87,7 +87,14 @@ public class TaskMonitor {
     }
     return instance;
   }
-  
+
+  public static synchronized void clearInstance() {
+    if (instance != null) {
+      instance.shutdown();
+    }
+    instance = null;
+  }
+
   public synchronized MonitoredTask createStatus(String description) {
     MonitoredTask stat = new MonitoredTaskImpl();
     stat.setDescription(description);

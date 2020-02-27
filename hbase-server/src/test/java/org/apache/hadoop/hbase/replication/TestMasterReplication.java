@@ -78,12 +78,14 @@ import org.apache.hadoop.hbase.zookeeper.ZNodePaths;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ReplicationTests.class, LargeTests.class})
+@Ignore // nocommit - grrrr
 public class TestMasterReplication {
 
   @ClassRule
@@ -99,7 +101,7 @@ public class TestMasterReplication {
   private MiniZooKeeperCluster miniZK;
 
   private static final long SLEEP_TIME = 1000;
-  private static final int NB_RETRIES = 120;
+  private static final int NB_RETRIES = 20;
 
   private static final TableName tableName = TableName.valueOf("test");
   private static final byte[] famName = Bytes.toBytes("f");
@@ -126,7 +128,7 @@ public class TestMasterReplication {
     baseConfiguration.setInt("replication.source.size.capacity", 1024);
     baseConfiguration.setLong("replication.source.sleepforretries", 100);
     baseConfiguration.setInt("hbase.regionserver.maxlogs", 10);
-    baseConfiguration.setLong("hbase.master.logcleaner.ttl", 10);
+    baseConfiguration.setLong("hbase.master.logcleaner.ttl", 1000);
     baseConfiguration.setBoolean(HConstants.REPLICATION_BULKLOAD_ENABLE_KEY, true);
     baseConfiguration.set("hbase.replication.source.fs.conf.provider",
       TestSourceFSConfigurationProvider.class.getCanonicalName());
@@ -135,6 +137,14 @@ public class TestMasterReplication {
     baseConfiguration.setStrings(
         CoprocessorHost.USER_REGION_COPROCESSOR_CONF_KEY,
         CoprocessorCounter.class.getName());
+
+    baseConfiguration.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 15);
+    baseConfiguration.setInt(HConstants.REGION_SERVER_REPLICATION_HANDLER_COUNT, 30);
+    baseConfiguration.setInt("dfs.namenode.handler.count", 20);
+    baseConfiguration.setInt("dfs.datanode.handler.count", 20);
+    baseConfiguration.setInt("dfs.datanode.max.transfer.threads", 40);
+    baseConfiguration.setInt("hbase.client.sync.wait.timeout.msec", 60000);
+
     table = TableDescriptorBuilder.newBuilder(tableName)
         .setColumnFamily(ColumnFamilyDescriptorBuilder.newBuilder(famName)
             .setScope(HConstants.REPLICATION_SCOPE_GLOBAL).build())
@@ -496,6 +506,11 @@ public class TestMasterReplication {
       configurations[i] = conf;
       new ZKWatcher(conf, "cluster" + i, null, true);
     }
+
+    for (int i = 0; i < numClusters; i++) {
+      utilities[i].getMiniHBaseCluster().waitForActiveAndReadyMaster(15000);
+      utilities[i].waitUntilNoRegionsInTransition(15000);
+    }
   }
 
   private void shutDownMiniClusters() throws Exception {
@@ -511,6 +526,7 @@ public class TestMasterReplication {
   private void createTableOnClusters(TableDescriptor table) throws Exception {
     for (HBaseTestingUtility utility : utilities) {
       utility.getAdmin().createTable(table);
+      utility.waitTableAvailable(table.getTableName(), 15000);
     }
   }
 

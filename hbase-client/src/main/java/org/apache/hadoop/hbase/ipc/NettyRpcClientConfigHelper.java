@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.ipc;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.util.Pair;
@@ -53,8 +55,8 @@ public final class NettyRpcClientConfigHelper {
 
   private static final String CONFIG_NAME = "global-event-loop";
 
-  private static final Map<String, Pair<EventLoopGroup, Class<? extends Channel>>>
-    EVENT_LOOP_CONFIG_MAP = new HashMap<>();
+  public static final Map<String, Pair<EventLoopGroup, Class<? extends Channel>>>
+    EVENT_LOOP_CONFIG_MAP = new ConcurrentHashMap<>();
 
   /**
    * Shutdown constructor.

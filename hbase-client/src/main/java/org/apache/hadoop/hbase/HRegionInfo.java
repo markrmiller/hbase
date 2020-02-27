@@ -164,20 +164,20 @@ public class HRegionInfo implements RegionInfo {
   // as of 0.90.0 HBase. And now in DisableTableProcedure, finally we will create bunch of
   // UnassignProcedures and at the last of the procedure we will set the region state to CLOSED, and
   // will not change the offLine flag.
-  private boolean offLine = false;
-  private long regionId = -1;
-  private transient byte [] regionName = HConstants.EMPTY_BYTE_ARRAY;
+  private volatile boolean offLine = false;
+  private volatile long regionId = -1;
+  private volatile transient byte [] regionName = HConstants.EMPTY_BYTE_ARRAY;
   private boolean split = false;
-  private byte [] startKey = HConstants.EMPTY_BYTE_ARRAY;
+  private volatile byte [] startKey = HConstants.EMPTY_BYTE_ARRAY;
   private int hashCode = -1;
   //TODO: Move NO_HASH to HStoreFile which is really the only place it is used.
   public static final String NO_HASH = null;
-  private String encodedName = null;
-  private byte [] encodedNameAsBytes = null;
-  private int replicaId = DEFAULT_REPLICA_ID;
+  private volatile String encodedName = null;
+  private volatile byte [] encodedNameAsBytes = null;
+  private volatile int replicaId = DEFAULT_REPLICA_ID;
 
   // Current TableName
-  private TableName tableName = null;
+  private volatile TableName tableName = null;
 
   // Duplicated over in RegionInfoDisplay
   final static String DISPLAY_KEYS_KEY = RegionInfoDisplay.DISPLAY_KEYS_KEY;

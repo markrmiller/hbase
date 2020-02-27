@@ -59,7 +59,7 @@ public class BlockingRpcCallback<R> implements RpcCallback<R> {
   public synchronized R get() throws IOException {
     while (!resultSet) {
       try {
-        this.wait();
+        this.wait(10000);
       } catch (InterruptedException ie) {
         InterruptedIOException exception = new InterruptedIOException(ie.getMessage());
         exception.initCause(ie);

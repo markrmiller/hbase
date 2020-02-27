@@ -107,6 +107,11 @@ public class TestSnapshotTemporaryDirectory {
   }
 
   private static void setupConf(Configuration conf) {
+    conf.setInt(HConstants.REGION_SERVER_HIGH_PRIORITY_HANDLER_COUNT, 15);
+    conf.setInt(HConstants.REGION_SERVER_REPLICATION_HANDLER_COUNT, 30);
+    conf.setInt("dfs.namenode.handler.count", 20);
+    conf.setInt("dfs.datanode.handler.count", 20);
+    conf.setInt("dfs.datanode.max.transfer.threads", 40);
     // disable the ui
     conf.setInt("hbase.regionsever.info.port", -1);
     // change the flush size to a small amount, regulating number of store files

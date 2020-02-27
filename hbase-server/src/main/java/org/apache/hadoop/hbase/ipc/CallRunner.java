@@ -47,9 +47,11 @@ public class CallRunner {
   private static final CallDroppedException CALL_DROPPED_EXCEPTION
     = new CallDroppedException();
 
+  // these two are effectively final
   private RpcCall call;
   private RpcServerInterface rpcServer;
-  private MonitoredRPCHandler status;
+
+  private volatile MonitoredRPCHandler status;
   private volatile boolean sucessful;
 
   /**

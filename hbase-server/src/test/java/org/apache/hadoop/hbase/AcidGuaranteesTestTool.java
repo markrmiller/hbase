@@ -83,8 +83,8 @@ public class AcidGuaranteesTestTool extends AbstractHBaseTool {
   private boolean useMob;
 
   private ExecutorService createThreadPool() {
-    int maxThreads = 256;
-    int coreThreads = 128;
+    int maxThreads = Integer.getInteger("acid.testtool.maxthreads", 256);
+    int coreThreads =Integer.getInteger("acid.testtool.corethreads", 128);
 
     long keepAliveTime = 60;
     BlockingQueue<Runnable> workQueue = new LinkedBlockingQueue<Runnable>(

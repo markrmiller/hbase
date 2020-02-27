@@ -173,7 +173,7 @@ public class AssignmentManager {
 
   private final Object checkIfShouldMoveSystemRegionLock = new Object();
 
-  private Thread assignThread;
+  private volatile Thread assignThread;
 
   public AssignmentManager(final MasterServices master) {
     this(master, new RegionStateStore(master));

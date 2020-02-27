@@ -21,6 +21,7 @@ package org.apache.hadoop.hbase.executor;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.management.ThreadInfo;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -105,6 +106,7 @@ public class ExecutorService {
     return this.executorMap.containsKey(name);
   }
 
+  // nocommit - ideally we wait and maybe not intterupt?
   public void shutdown() {
     this.delayedSubmitTimer.shutdownNow();
     for(Entry<String, Executor> entry: this.executorMap.entrySet()) {
@@ -243,15 +245,13 @@ public class ExecutorService {
       }
 
       List<RunningEventStatus> running = Lists.newArrayList();
-      for (Map.Entry<Thread, Runnable> e :
-          threadPoolExecutor.getRunningTasks().entrySet()) {
-        Runnable r = e.getValue();
+      threadPoolExecutor.getRunningTasks().forEach((thread, r) -> {
         if (!(r instanceof EventHandler)) {
           LOG.warn("Non-EventHandler " + r + " running in " + name);
-          continue;
+        } else {
+          running.add(new RunningEventStatus(thread, (EventHandler) r));
         }
-        running.add(new RunningEventStatus(e.getKey(), (EventHandler)r));
-      }
+      });
 
       return new ExecutorStatus(this, queuedEvents, running);
     }

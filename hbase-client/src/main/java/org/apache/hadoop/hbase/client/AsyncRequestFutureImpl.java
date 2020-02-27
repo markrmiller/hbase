@@ -747,9 +747,9 @@ class AsyncRequestFutureImpl<CResult> implements AsyncRequestFuture {
     // It should be possible to have some heuristics to take the right decision. Short term,
     //  we go for one.
     boolean retryImmediately = throwable instanceof RetryImmediatelyException;
-    int nextAttemptNumber = retryImmediately ? numAttempt : numAttempt + 1;
+    int nextAttemptNumber = numAttempt + 1;
     long backOffTime;
-    if (retryImmediately) {
+    if (retryImmediately && numAttempt < 3) { // avoid high speed recursion trap
       backOffTime = 0;
     } else if (throwable instanceof CallQueueTooBigException) {
       // Give a special check on CQTBE, see #HBASE-17114

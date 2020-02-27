@@ -30,6 +30,8 @@ import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.DoNotRetryIOException;
 import org.apache.hadoop.hbase.util.FutureUtils;
@@ -118,9 +120,9 @@ public final class ReadOnlyZKClient implements Closeable {
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
   @VisibleForTesting
-  ZooKeeper zookeeper;
+  volatile ZooKeeper zookeeper;
 
-  private int pendingRequests = 0;
+  private final AtomicInteger pendingRequests = new AtomicInteger(0);
 
   private String getId() {
     return String.format("0x%08x", System.identityHashCode(this));
@@ -168,7 +170,7 @@ public final class ReadOnlyZKClient implements Closeable {
 
         @Override
         public void exec(ZooKeeper alwaysNull) {
-          pendingRequests--;
+          pendingRequests.decrementAndGet();
           Code code = Code.get(rc);
           if (code == Code.OK) {
             future.complete(ret);
@@ -222,7 +224,7 @@ public final class ReadOnlyZKClient implements Closeable {
 
     @Override
     public final void exec(ZooKeeper zk) {
-      pendingRequests++;
+      pendingRequests.incrementAndGet();
       doExec(zk);
     }
 
@@ -264,7 +266,8 @@ public final class ReadOnlyZKClient implements Closeable {
       @Override
       protected void doExec(ZooKeeper zk) {
         zk.getData(path, false,
-            (rc, path, ctx, data, stat) -> onComplete(zk, rc, data, true), null);
+          (rc, path, ctx, data, stat) -> onComplete(
+                zk, rc, data, true), null);
       }
     });
     return future;
@@ -331,7 +334,7 @@ public final class ReadOnlyZKClient implements Closeable {
         break;
       }
       if (task == null) {
-        if (pendingRequests == 0) {
+        if (pendingRequests.get() == 0) {
           LOG.trace("{} to {} inactive for {}ms; closing (Will reconnect when new requests)",
             getId(), connectString, keepAliveTimeMs);
           closeZk();
