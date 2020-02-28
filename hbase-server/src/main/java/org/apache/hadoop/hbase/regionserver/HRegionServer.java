@@ -907,7 +907,7 @@ public class HRegionServer extends HasThread implements
     }
 
     waitForMasterActive();
-    if (isStopped() || isAborted()) {
+    if (isStopping() || isStopped() || isAborted()) {
       return; // No need for further initialization
     }
 
@@ -931,7 +931,7 @@ public class HRegionServer extends HasThread implements
   private void blockAndCheckIfStopped(ZKNodeTracker tracker)
       throws IOException, InterruptedException {
     while (tracker.blockUntilAvailable(this.msgInterval, false) == null) {
-      if (this.stopped) {
+      if (this.stopped || this.isStopping()) {
         throw new IOException("Received the shutdown message while waiting.");
       }
     }
@@ -963,7 +963,7 @@ public class HRegionServer extends HasThread implements
     }
 
     try {
-      if (!isStopped() && !isAborted()) {
+      if (!isStopping() && !isStopped() && !isAborted()) {
         ShutdownHook.install(conf, dataFs, this, Thread.currentThread());
         // Initialize the RegionServerCoprocessorHost now that our ephemeral
         // node was created, in case any coprocessors want to use ZooKeeper
@@ -990,7 +990,7 @@ public class HRegionServer extends HasThread implements
         }
       }
 
-      if (!isStopped() && isHealthy()) {
+      if (!isStopping() && !isStopped() && isHealthy()) {
         // start the snapshot handler and other procedure handlers,
         // since the server is ready to run
         if (this.rspmHost != null) {
@@ -1009,7 +1009,7 @@ public class HRegionServer extends HasThread implements
       long lastMsg = System.currentTimeMillis();
       long oldRequestCount = -1;
       // The main run loop.
-      while (!isStopped() && isHealthy()) {
+      while (!isStopping() && !isStopped() && isHealthy()) {
         if (!isClusterUp()) {
           if (onlineRegions.isEmpty()) {
             stop("Exiting; cluster shutdown set and not carrying any regions");
@@ -1042,7 +1042,7 @@ public class HRegionServer extends HasThread implements
           tryRegionServerReport(lastMsg, now);
           lastMsg = System.currentTimeMillis();
         }
-        if (!isStopped() && !isAborted()) {
+        if (!isStopping() && !isStopped() && !isAborted()) {
           this.sleeper.sleep();
         }
       } // for
@@ -1142,10 +1142,6 @@ public class HRegionServer extends HasThread implements
       shutdownWAL(!abortRequested);
     }
 
-   // if (eventLoopGroupConfig != null) {
-   //   eventLoopGroupConfig.group().shutdownGracefully();
-   // }
-
     // Make sure the proxy is down.
     if (this.rssStub != null) {
       this.rssStub = null;
@@ -1163,13 +1159,15 @@ public class HRegionServer extends HasThread implements
       this.pauseMonitor.stop();
     }
 
-    if (!killed) {
+    //if (!killed) { nocommit
       stopServiceThreads();
-    }
+    //}
 
     if (this.rpcServices != null) {
       this.rpcServices.stop();
     }
+
+    eventLoopGroupConfig.group().shutdownGracefully();
 
     try {
       deleteMyEphemeralNode();
@@ -1185,6 +1183,11 @@ public class HRegionServer extends HasThread implements
     if (this.zooKeeper != null) {
       this.zooKeeper.close();
     }
+
+    if (eventLoopGroupConfig != null) {
+      eventLoopGroupConfig.group().shutdownGracefully();
+    }
+
     this.shutDown = true;
     LOG.info("Exiting; stopping=" + this.serverName + "; zookeeper connection closed.");
   }
@@ -1942,7 +1945,7 @@ public class HRegionServer extends HasThread implements
    * hosting server. Worker logs the exception and exits.
    */
   private void startServices() throws IOException {
-    if (!isStopped() && !isAborted()) {
+    if (!isStopping() && !isStopped() && !isAborted()) {
       initializeThreads();
     }
     this.secureBulkLoadManager = new SecureBulkLoadManager(this.conf, clusterConnection);
@@ -2224,9 +2227,9 @@ public class HRegionServer extends HasThread implements
    * @param user The user executing the stop request, or null if no user is associated
    */
   public void stop(final String msg, final boolean force, final User user) {
-    if (!this.stopped) {
+    if (!this.stopped || !this.isStopping()) {
       LOG.info("***** STOPPING region server '" + this + "' *****");
-      //this.executorService.shutdown();
+      stopping = true;
       if (this.rsHost != null) {
         // when forced via abort don't allow CPs to override
         try {
@@ -2239,17 +2242,19 @@ public class HRegionServer extends HasThread implements
           LOG.warn("Skipping coprocessor exception on preStop() due to forced shutdown", ioe);
         }
       }
-      //eventLoopGroupConfig.group().shutdownGracefully();
-      // executorService.awaitTermination(); nocommit
+
       this.stopped = true;
       LOG.info("STOPPED: " + msg);
       // Wakes run() if it is sleeping
       sleeper.skipSleepCycle();
+    } else {
+      this.stopping = true;
     }
+
   }
 
   public void waitForServerOnline(){
-    while (!isStopped() && !isOnline()) {
+    while (!isStopping() && !isStopped() && !isOnline()) {
       synchronized (online) {
         try {
           online.wait(msgInterval);
@@ -2582,7 +2587,6 @@ public class HRegionServer extends HasThread implements
     if (this.compactSplitThread != null) {
       this.compactSplitThread.join();
     }
-    if (this.executorService != null) this.executorService.shutdown();
     if (this.replicationSourceHandler != null &&
         this.replicationSourceHandler == this.replicationSinkHandler) {
       this.replicationSourceHandler.stopReplicationService();
@@ -2593,6 +2597,10 @@ public class HRegionServer extends HasThread implements
       if (this.replicationSinkHandler != null) {
         this.replicationSinkHandler.stopReplicationService();
       }
+    }
+
+    if (this.executorService != null) {
+      this.executorService.shutdown();
     }
   }
 
@@ -3527,7 +3535,8 @@ public class HRegionServer extends HasThread implements
       Stoppable stoppable = new Stoppable() {
         private volatile boolean isStopped = false;
         @Override public void stop(String why) { isStopped = true;}
-        @Override public boolean isStopped() {return isStopped;}
+        @Override public boolean isStopped() {return isStopped();}
+        @Override public boolean isStopping() {return isStopping();}
       };
 
       return new MovedRegionsCleaner(rs, stoppable);

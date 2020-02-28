@@ -41,7 +41,7 @@ public class Sleeper {
 
   /**
    * @param sleep sleep time in milliseconds
-   * @param stopper When {@link Stoppable#isStopped()} is true, this thread will
+   * @param stopper When {@link Stoppable#isStopping()} is true, this thread will
    *    cleanup and exit cleanly.
    */
   public Sleeper(final int sleep, final Stoppable stopper) {
@@ -68,7 +68,7 @@ public class Sleeper {
   }
 
   public void sleep(long sleepTime) {
-    if (this.stopper.isStopped()) {
+    if (this.stopper.isStopping()) {
       return;
     }
     long now = System.currentTimeMillis();
@@ -93,7 +93,8 @@ public class Sleeper {
       } catch(InterruptedException iex) {
         // We we interrupted because we're meant to stop?  If not, just
         // continue ignoring the interruption
-        if (this.stopper.isStopped()) {
+        if (this.stopper.isStopping()) {
+          Thread.currentThread().interrupt();
           return;
         }
       }

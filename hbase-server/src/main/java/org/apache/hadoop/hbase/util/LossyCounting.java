@@ -97,12 +97,12 @@ public class LossyCounting<T> implements Closeable {
   }
 
   public void close() {
-//    executor.shutdownNow();
-//    try {
-//      executor.awaitTermination(30, TimeUnit.SECONDS);
-//    } catch (InterruptedException e) {
-//      Thread.currentThread().interrupt();
-//    }
+    executor.shutdownNow();
+    try {
+      executor.awaitTermination(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void add(T key) {

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -38,6 +39,7 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.MasterThread;
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.apache.hadoop.hbase.util.Threads;
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 import org.apache.yetus.audience.InterfaceAudience;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +137,7 @@ public class MiniHBaseCluster extends HBaseCluster {
      * so any restarted instances of the same server will have different ServerName and will not
      * coincide with past dead ones. So there's no need to cleanup this list.
      */
-    static Set<ServerName> killedServers = new HashSet<>();
+    static Set<ServerName> killedServers = ConcurrentHashMap.newKeySet();
 
     public MiniHBaseClusterRegionServer(Configuration conf)
         throws IOException, InterruptedException {

@@ -82,7 +82,7 @@ public class OpenRegionHandler extends EventHandler {
     HRegion region = null;
 
     try {
-      if (this.server.isStopped() || this.rsServices.isStopping()) {
+      if (this.server.isStopping() || this.rsServices.isStopping()) {
         return;
       }
       final String encodedName = regionInfo.getEncodedName();
@@ -187,7 +187,7 @@ public class OpenRegionHandler extends EventHandler {
     // Post open deploy task:
     //   meta => update meta location in ZK
     //   other region => update meta
-    while (!signaller.get() && t.isAlive() && !this.server.isStopped() &&
+    while (!signaller.get() && t.isAlive() && !this.server.isStopping() &&
         !this.rsServices.isStopping() && isRegionStillOpening()) {
       synchronized (signaller) {
         try {

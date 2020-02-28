@@ -44,7 +44,7 @@ public class NettyEventLoopGroupConfig {
 
   private static boolean useEpoll(Configuration conf) {
     // Config to enable native transport.
-    boolean epollEnabled = conf.getBoolean("hbase.netty.nativetransport", true);
+    boolean epollEnabled = conf.getBoolean("hbase.netty.nativetransport", false);
     // Use the faster native epoll transport mechanism on linux if enabled
     return epollEnabled && JVM.isLinux() && JVM.isAmd64();
   }
@@ -53,7 +53,7 @@ public class NettyEventLoopGroupConfig {
     boolean useEpoll = useEpoll(conf);
     int workerCount = conf.getInt("hbase.netty.worker.count", 0);
     ThreadFactory eventLoopThreadFactory =
-        new DefaultThreadFactory(threadPoolName, true, Thread.MAX_PRIORITY);
+        new DefaultThreadFactory(threadPoolName, true, Thread.NORM_PRIORITY);
     if (useEpoll) {
       group = new EpollEventLoopGroup(workerCount, eventLoopThreadFactory);
       serverChannelClass = EpollServerSocketChannel.class;

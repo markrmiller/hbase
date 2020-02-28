@@ -35,5 +35,12 @@ public interface Stoppable {
   /**
    * @return True if {@link #stop(String)} has been closed.
    */
+  default boolean isStopping() {
+    return false; // nocommit
+  }
+
+  /**
+   * @return True if {@link #stop(String)} has been closed.
+   */
   boolean isStopped();
 }

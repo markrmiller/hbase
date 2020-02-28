@@ -98,7 +98,7 @@ public class ActiveMasterManager extends ZKListener {
     // shut down, so that state is now irrelevant. This means that the shutdown
     // state must be set while we wait on the active master in order
     // to shutdown this master. See HBASE-8519.
-    if(path.equals(watcher.getZNodePaths().clusterStateZNode) && !master.isStopped()) {
+    if(path.equals(watcher.getZNodePaths().clusterStateZNode) && !master.isStopping()) {
       clusterShutDown.set(true);
     }
 
@@ -106,7 +106,7 @@ public class ActiveMasterManager extends ZKListener {
   }
 
   void handle(final String path) {
-    if (path.equals(watcher.getZNodePaths().masterAddressZNode) && !master.isStopped()) {
+    if (path.equals(watcher.getZNodePaths().masterAddressZNode) && !master.isStopping()) {
       handleMasterNodeChange();
     }
   }
