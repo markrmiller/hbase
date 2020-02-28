@@ -157,7 +157,7 @@ public class AsyncProtobufLogWriter extends AbstractProtobufLogWriter
       LOG.warn("normal close failed, try recover", e);
       output.recoverAndClose(null);
     } finally {
-      //eventLoopGroup.shutdownGracefully();
+     // eventLoopGroup.shutdownGracefully();
     }
     this.output = null;
   }

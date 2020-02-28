@@ -234,7 +234,7 @@ public class HMasterCommandLine extends ServerCommandLine {
       } else {
         logProcessInfo(getConf());
         HMaster master = HMaster.constructMaster(masterClass, conf);
-        if (master.isStopped()) {
+        if (master.isStopped() || master.isStopping()) {
           LOG.info("Won't bring the Master up as a shutdown is requested");
           return 1;
         }

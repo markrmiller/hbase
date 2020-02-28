@@ -72,14 +72,14 @@ public class ZKLeaderManager extends ZKListener {
 
   @Override
   public void nodeCreated(String path) {
-    if (leaderZNode.equals(path) && !candidate.isStopped()) {
+    if (leaderZNode.equals(path) && !candidate.isStopping()) {
       handleLeaderChange();
     }
   }
 
   @Override
   public void nodeDeleted(String path) {
-    if (leaderZNode.equals(path) && !candidate.isStopped()) {
+    if (leaderZNode.equals(path) && !candidate.isStopping()) {
       handleLeaderChange();
     }
   }
@@ -106,7 +106,7 @@ public class ZKLeaderManager extends ZKListener {
    * Blocks until this instance has claimed the leader ZNode in ZooKeeper
    */
   public void waitToBecomeLeader() {
-    while (!candidate.isStopped()) {
+    while (!candidate.isStopping()) {
       try {
         if (ZKUtil.createEphemeralNodeAndWatch(watcher, leaderZNode, nodeId)) {
           // claimed the leader znode
@@ -138,10 +138,11 @@ public class ZKLeaderManager extends ZKListener {
 
       // wait for next chance
       synchronized(lock) {
-        while (leaderExists.get() && !candidate.isStopped()) {
+        while (leaderExists.get() && !candidate.isStopping()) {
           try {
             lock.wait();
           } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             LOG.debug("Interrupted waiting on leader", ie);
           }
         }

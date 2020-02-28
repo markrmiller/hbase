@@ -58,7 +58,7 @@ class SyncFuture {
    * The transaction id that was set in here when we were marked done. Should be equal or > txnId.
    * Put this data member into the NOT_DONE state while this class is in use.
    */
-  private long doneTxid;
+  private volatile long doneTxid;
 
   /**
    * If error, the associated throwable. Set when the future is 'done'.

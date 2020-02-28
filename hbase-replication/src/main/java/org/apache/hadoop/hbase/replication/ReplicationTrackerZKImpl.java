@@ -112,7 +112,7 @@ public class ReplicationTrackerZKImpl implements ReplicationTracker {
      */
     @Override
     public void nodeDeleted(String path) {
-      if (stopper.isStopped()) {
+      if (stopper.isStopping()) {
         return;
       }
       boolean cont = refreshListIfRightPath(path);
@@ -131,7 +131,7 @@ public class ReplicationTrackerZKImpl implements ReplicationTracker {
      */
     @Override
     public void nodeChildrenChanged(String path) {
-      if (stopper.isStopped()) {
+      if (stopper.isStopping()) {
         return;
       }
       refreshListIfRightPath(path);

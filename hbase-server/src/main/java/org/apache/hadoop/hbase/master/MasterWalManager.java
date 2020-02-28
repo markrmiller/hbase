@@ -209,7 +209,7 @@ public class MasterWalManager {
     Path logsDirPath = new Path(this.rootDir, HConstants.HREGION_LOGDIR_NAME);
 
     do {
-      if (services.isStopped()) {
+      if (services.isStopping()) {
         LOG.warn("Master stopped while trying to get failed servers.");
         break;
       }

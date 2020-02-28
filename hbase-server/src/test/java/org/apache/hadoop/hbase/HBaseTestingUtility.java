@@ -3479,7 +3479,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
       getMiniHBaseCluster().getRegionServerThreads()) {
 
       HRegionServer hrs = rst.getRegionServer();
-      if (hrs.isStopping() || hrs.isStopped()) {
+      if (hrs.isStopping() || hrs.isStopped() || hrs.isStopping()) {
         LOG.info("A region server is stopped or stopping:"+hrs);
       } else {
         nonStoppedServers++;

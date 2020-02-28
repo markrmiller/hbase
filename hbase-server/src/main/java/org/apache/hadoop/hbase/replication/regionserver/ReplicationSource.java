@@ -661,7 +661,7 @@ public class ReplicationSource implements ReplicationSourceInterface {
 
   @Override
   public boolean isSourceActive() {
-    return !this.server.isStopped() && this.sourceRunning;
+    return !this.server.isStopping() && !this.server.isStopping() && this.sourceRunning;
   }
 
   public UUID getPeerClusterUUID(){

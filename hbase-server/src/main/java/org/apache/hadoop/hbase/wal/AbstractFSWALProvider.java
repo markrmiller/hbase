@@ -82,7 +82,7 @@ public abstract class AbstractFSWALProvider<T extends AbstractFSWAL<?>> implemen
   protected volatile T wal;
   protected WALFactory factory;
   protected Configuration conf;
-  protected List<WALActionsListener> listeners = new ArrayList<>();
+  protected List<WALActionsListener> listeners = Collections.synchronizedList(new ArrayList<>());
   protected String providerId;
   protected AtomicBoolean initialized = new AtomicBoolean(false);
   // for default wal provider, logPrefix won't change

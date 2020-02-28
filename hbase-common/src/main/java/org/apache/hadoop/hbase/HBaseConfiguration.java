@@ -157,7 +157,7 @@ public class HBaseConfiguration extends Configuration {
 
       conf.setInt("dfs.namenode.handler.count", 12);
       conf.setInt("dfs.datanode.handler.count", 12);
-      conf.setInt("dfs.datanode.max.transfer.threads", 40); // has to be fairly high
+      conf.setInt("dfs.datanode.max.transfer.threads", 200); // has to be fairly high, but its a limit, not eager
       conf.setInt("dfs.client.file-block-storage-locations.num-threads", 12);
       conf.setInt("ipc.server.handler.queue.size", 5);
       conf.setInt("ipc.server.read.connection-queue.size", 10);

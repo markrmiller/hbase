@@ -338,7 +338,7 @@ public class LocalHBaseCluster {
     for (JVMClusterUtil.MasterThread mt : masterThreads) {
       // Ensure that the current active master is not stopped.
       // We don't want to return a stopping master as an active master.
-      if (mt.getMaster().isActiveMaster()  && !mt.getMaster().isStopped()) {
+      if (mt.getMaster().isActiveMaster()  && !mt.getMaster().isStopped() && !mt.getMaster().isStopping()) {
         return mt.getMaster();
       }
     }

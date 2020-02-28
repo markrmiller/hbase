@@ -547,7 +547,7 @@ public class ServerManager {
   synchronized long expireServer(final ServerName serverName, boolean force) {
     // THIS server is going down... can't handle our own expiration.
     if (serverName.equals(master.getServerName())) {
-      if (!(master.isAborted() || master.isStopped())) {
+      if (!(master.isAborted() || master.isStopping())) {
         master.stop("We lost our znode?");
       }
       return Procedure.NO_PROC_ID;
@@ -798,7 +798,7 @@ public class ServerManager {
     for (ServerListener listener: this.listeners) {
       listener.waiting();
     }
-    while (!this.master.isStopped() && !isClusterShutdown() && count < maxToStart &&
+    while (!this.master.isStopping() && !isClusterShutdown() && count < maxToStart &&
         ((lastCountChange + interval) > now || timeout > slept || count < minToStart)) {
       // Log some info at every interval time or if there is a change
       if (oldCount != count || lastLogTime + interval < now) {
@@ -829,7 +829,7 @@ public class ServerManager {
     }
     LOG.info("Finished waiting on RegionServer count=" + count + "; waited=" + slept + "ms," +
         " expected min=" + minToStart + " server(s), max=" +  getStrForMax(maxToStart) + " server(s),"+
-        " master is "+ (this.master.isStopped() ? "stopped.": "running"));
+        " master is "+ (this.master.isStopping() ? "stopped.": "running"));
   }
 
   private String getStrForMax(final int max) {

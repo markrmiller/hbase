@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.ipc;
 
 import org.apache.hadoop.hbase.exceptions.ConnectionClosedException;
+import org.apache.hbase.thirdparty.com.google.common.collect.Maps;
 import org.apache.hbase.thirdparty.com.google.protobuf.Message;
 import org.apache.hbase.thirdparty.com.google.protobuf.Message.Builder;
 import org.apache.hbase.thirdparty.com.google.protobuf.TextFormat;
@@ -64,7 +65,7 @@ class NettyRpcDuplexHandler extends ChannelDuplexHandler {
 
   private final CompressionCodec compressor;
 
-  private final Map<Integer, Call> id2Call = new HashMap<>();
+  private final Map<Integer, Call> id2Call = Maps.newConcurrentMap();
 
   public NettyRpcDuplexHandler(NettyRpcConnection conn, CellBlockBuilder cellBlockBuilder,
       Codec codec, CompressionCodec compressor) {
