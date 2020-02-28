@@ -358,7 +358,7 @@ public class ClusterStatusPublisher extends ScheduledChore {
           channel.close();
         }
       } finally {
-        // group.shutdownGracefully();
+      //  group.shutdownGracefully();
       }
     }
   }

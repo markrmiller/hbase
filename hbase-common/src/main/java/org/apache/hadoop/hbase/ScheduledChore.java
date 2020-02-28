@@ -177,7 +177,7 @@ public abstract class ScheduledChore implements Runnable {
     if (missedStartTime() && isScheduled()) {
       onChoreMissedStartTime();
       if (LOG.isInfoEnabled()) LOG.info("Chore: " + getName() + " missed its start time");
-    } else if (stopper.isStopped() || !isScheduled()) {
+    } else if (stopper.isStopping() || !isScheduled()) {
       cancel(false);
       cleanup();
       if (LOG.isInfoEnabled()) LOG.info("Chore: " + getName() + " was stopped");
@@ -198,7 +198,7 @@ public abstract class ScheduledChore implements Runnable {
         }
       } catch (Throwable t) {
         if (LOG.isErrorEnabled()) LOG.error("Caught error", t);
-        if (this.stopper.isStopped()) {
+        if (this.stopper.isStopping()) {
           cancel(false);
           cleanup();
         }

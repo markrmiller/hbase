@@ -86,7 +86,7 @@ public class NettyRpcServer extends RpcServer {
     } else {
       eventLoopGroup = new NioEventLoopGroup(Integer.getInteger(
           "hbase.netty.eventloop.default.pool", 0),
-          new DefaultThreadFactory("NettyRpcServer", true, Thread.MAX_PRIORITY));
+          new DefaultThreadFactory("NettyRpcServer", true, Thread.NORM_PRIORITY));
       channelClass = NioServerSocketChannel.class;
     }
     ServerBootstrap bootstrap = new ServerBootstrap().group(eventLoopGroup).channel(channelClass)

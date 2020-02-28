@@ -38,7 +38,7 @@ public class TimeToLiveLogCleaner extends BaseLogCleanerDelegate {
   public static final long DEFAULT_TTL = 600_000L;
   // Configured time a log can be kept after it was closed
   private long ttl;
-  private boolean stopped = false;
+  private volatile boolean stopped = false;
 
   @Override
   public boolean isFileDeletable(FileStatus fStat) {

@@ -21,6 +21,7 @@ package org.apache.hadoop.hbase.executor;
 import java.io.IOException;
 import java.io.Writer;
 import java.lang.management.ThreadInfo;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,6 +115,14 @@ public class ExecutorService {
         entry.getValue().threadPoolExecutor.shutdownNow();
       if (!wasRunning.isEmpty()) {
         LOG.info(entry.getValue() + " had " + wasRunning + " on shutdown");
+      }
+    }
+
+    for(Entry<String, Executor> entry: this.executorMap.entrySet()) {
+      try {
+        entry.getValue().threadPoolExecutor.awaitTermination(30, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
     this.executorMap.clear();

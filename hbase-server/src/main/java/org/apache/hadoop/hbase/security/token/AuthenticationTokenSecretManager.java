@@ -20,6 +20,7 @@ package org.apache.hadoop.hbase.security.token;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,8 +68,8 @@ public class AuthenticationTokenSecretManager
   private long keyUpdateInterval;
   private long tokenMaxLifetime;
   private ZKSecretWatcher zkWatcher;
-  private LeaderElector leaderElector;
-  private ZKClusterId clusterId;
+  private final LeaderElector leaderElector;
+  private final ZKClusterId clusterId;
 
   private Map<Integer,AuthenticationKey> allKeys = new ConcurrentHashMap<>();
   private AuthenticationKey currentKey;
@@ -149,7 +150,7 @@ public class AuthenticationTokenSecretManager
             + " because of ZKWatcher abort");
       }
       synchronized (this) {
-        if (!leaderElector.isAlive() || leaderElector.isStopped()) {
+        if (!leaderElector.isAlive() || leaderElector.isStopping()) {
           LOG.warn("Thread leaderElector[" + leaderElector.getName() + ":"
               + leaderElector.getId() + "] is stopped or not alive");
           leaderElector.start();
@@ -284,9 +285,9 @@ public class AuthenticationTokenSecretManager
   }
 
   private class LeaderElector extends Thread implements Stoppable {
-    private boolean stopped = false;
+    private volatile boolean stopped = false;
     /** Flag indicating whether we're in charge of rolling/expiring keys */
-    private boolean isMaster = false;
+    private volatile boolean isMaster = false;
     private ZKLeaderManager zkLeader;
 
     public LeaderElector(ZKWatcher watcher, String serverName) {
@@ -342,9 +343,11 @@ public class AuthenticationTokenSecretManager
         try {
           Thread.sleep(5000);
         } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
           if (LOG.isDebugEnabled()) {
             LOG.debug("Interrupted waiting for next update", ie);
           }
+          return;
         }
       }
     }

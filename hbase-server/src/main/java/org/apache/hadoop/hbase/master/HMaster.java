@@ -716,7 +716,7 @@ public class HMaster extends HRegionServer implements MasterServices {
       return;
     }
     boolean tablesOnMaster = LoadBalancer.isTablesOnMaster(conf);
-    while (!(tablesOnMaster && activeMaster) && !isStopped() && !isAborted()) {
+    while (!(tablesOnMaster && activeMaster) && !isStopping() && !isStopped() && !isAborted()) {
       sleeper.sleep();
     }
   }
@@ -1044,7 +1044,7 @@ public class HMaster extends HRegionServer implements MasterServices {
     waitForRegionServers(status);
 
     // Check if master is shutting down because issue initializing regionservers or balancer.
-    if (isStopped()) {
+    if (isStopped() || isStopping()) {
       return;
     }
 
@@ -2856,6 +2856,8 @@ public class HMaster extends HRegionServer implements MasterServices {
       if (this.activeMasterManager != null) {
         this.activeMasterManager.stop();
       }
+      stopProcedureExecutor();
+      this.assignmentManager.stop();
     }
   }
 

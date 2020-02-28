@@ -343,8 +343,8 @@ public class SplitLogManager {
               return;
             }
           }
-          batch.wait(100);
-          if (server.isStopped()) {
+          batch.wait(250);
+          if (server.isStopping()) {
             LOG.warn("Stopped while waiting for log splits to be completed");
             return;
           }
