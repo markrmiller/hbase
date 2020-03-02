@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.ipc.HBaseRpcController;
 import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.SmallTests;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -46,6 +47,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mockito.ArgumentMatcher;
+import org.mockito.internal.util.io.IOUtil;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -64,6 +66,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProtos.ShutdownRe
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProtos.ShutdownResponse;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProtos.StopMasterRequest;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProtos.StopMasterResponse;
+import sun.misc.IOUtils;
 
 /**
  * Confirm that we will set the priority in {@link HBaseRpcController} for several admin operations.
@@ -155,6 +158,11 @@ public class TestAsyncAdminRpcPriority {
         return adminStub;
       }
     };
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    IOUtil.closeQuietly(conn);
   }
 
   private HBaseRpcController assertPriority(int priority) {

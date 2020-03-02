@@ -127,6 +127,7 @@ public class MasterQuotaManager implements RegionStateListener {
   }
 
   public void stop() {
+    namespaceQuotaManager.stop();
   }
 
   public boolean isQuotaInitialized() {

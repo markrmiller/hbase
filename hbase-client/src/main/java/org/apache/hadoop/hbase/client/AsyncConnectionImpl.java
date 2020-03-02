@@ -63,6 +63,8 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.ClientProtos.ClientServ
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProtos;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProtos.MasterService;
 
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
+
 /**
  * The implementation of AsyncConnection.
  */
@@ -120,6 +122,7 @@ class AsyncConnectionImpl implements AsyncConnection {
 
   public AsyncConnectionImpl(Configuration conf, ConnectionRegistry registry, String clusterId,
       User user) {
+    assert ObjectReleaseTracker.track(this);
     this.conf = conf;
     this.user = user;
     if (user.isLoginFromKeytab()) {
@@ -198,6 +201,7 @@ class AsyncConnectionImpl implements AsyncConnection {
     }
     metrics.ifPresent(MetricsConnection::shutdown);
     closed = true;
+    assert ObjectReleaseTracker.release(this);
   }
 
   @Override

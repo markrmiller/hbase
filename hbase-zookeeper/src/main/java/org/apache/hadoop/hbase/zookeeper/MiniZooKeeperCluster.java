@@ -29,6 +29,8 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.util.Threads;
@@ -49,12 +51,12 @@ import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesti
 public class MiniZooKeeperCluster {
   private static final Logger LOG = LoggerFactory.getLogger(MiniZooKeeperCluster.class);
 
-  private static final int TICK_TIME = 2000;
-  private static final int TIMEOUT = 1000;
+  private static final int TICK_TIME = 3000;
+  private static final int TIMEOUT = 10000;
   private static final int DEFAULT_CONNECTION_TIMEOUT = 30000;
   private int connectionTimeout;
 
-  private boolean started;
+  private volatile boolean started;
 
   /**
    * The default port. If zero, we use a random port.
@@ -318,20 +320,23 @@ public class MiniZooKeeperCluster {
     // shut down all the zk servers
     for (int i = 0; i < standaloneServerFactoryList.size(); i++) {
       NIOServerCnxnFactory standaloneServerFactory =
-        standaloneServerFactoryList.get(i);
+          standaloneServerFactoryList.get(i);
       int clientPort = clientPortList.get(i);
 
       standaloneServerFactory.shutdown();
-      if (!waitForServerDown(clientPort, connectionTimeout)) {
+      ZooKeeperServer zooKeeperServer = zooKeeperServers.get(i);
+
+      zooKeeperServer.shutdown(true);
+      if (!waitForServerDown(clientPort, 15000)) {
         throw new IOException("Waiting for shutdown of standalone server");
       }
     }
     standaloneServerFactoryList.clear();
 
-    for (ZooKeeperServer zkServer: zooKeeperServers) {
-      //explicitly close ZKDatabase since ZookeeperServer does not close them
-      zkServer.getZKDatabase().close();
-    }
+//    for (ZooKeeperServer zkServer: zooKeeperServers) {
+//      //explicitly close ZKDatabase since ZookeeperServer does not close them
+//      zkServer.getZKDatabase().close();
+//    }
     zooKeeperServers.clear();
 
     // clear everything
@@ -359,7 +364,7 @@ public class MiniZooKeeperCluster {
     int clientPort = clientPortList.get(activeZKServerIndex);
 
     standaloneServerFactory.shutdown();
-    if (!waitForServerDown(clientPort, connectionTimeout)) {
+    if (!waitForServerDown(clientPort, 3000)) {
       throw new IOException("Waiting for shutdown of standalone server");
     }
 
@@ -398,7 +403,7 @@ public class MiniZooKeeperCluster {
     int clientPort = clientPortList.get(backupZKServerIndex);
 
     standaloneServerFactory.shutdown();
-    if (!waitForServerDown(clientPort, connectionTimeout)) {
+    if (!waitForServerDown(clientPort, 3000)) {
       throw new IOException("Waiting for shutdown of standalone server");
     }
 
@@ -413,21 +418,22 @@ public class MiniZooKeeperCluster {
 
   // XXX: From o.a.zk.t.ClientBase. We just dropped the check for ssl/secure.
   private static boolean waitForServerDown(int port, long timeout) throws IOException {
-    long start = System.currentTimeMillis();
+    long start = System.nanoTime();
     while (true) {
       try {
-        send4LetterWord("localhost", port, "stat", (int)timeout);
+        send4LetterWord("127.0.0.1", port, "stat", (int)3000);
       } catch (IOException e) {
         return true;
       }
 
-      if (System.currentTimeMillis() > start + timeout) {
+      if (System.nanoTime() > start + TimeUnit.MILLISECONDS.toNanos(timeout)) {
         break;
       }
       try {
         Thread.sleep(TIMEOUT);
       } catch (InterruptedException e) {
-        throw (InterruptedIOException)new InterruptedIOException().initCause(e);
+        Thread.currentThread().interrupt();
+        throw new InterruptedIOException();
       }
     }
     return false;

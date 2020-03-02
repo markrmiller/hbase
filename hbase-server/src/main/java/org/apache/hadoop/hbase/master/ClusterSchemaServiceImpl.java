@@ -63,6 +63,11 @@ class ClusterSchemaServiceImpl extends AbstractService implements ClusterSchemaS
       this.tableNamespaceManager.start();
     } catch (IOException ioe) {
       notifyFailed(ioe);
+    } finally {
+      TableNamespaceManager tnsm = getTableNamespaceManager();
+      if (tnsm != null) {
+        tnsm.stop("Stopping");
+      }
     }
   }
 

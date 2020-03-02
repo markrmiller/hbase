@@ -31,6 +31,7 @@ import org.apache.hadoop.hbase.CompareOperator;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.yetus.audience.InterfaceAudience;
@@ -194,6 +195,7 @@ public class HTable implements Table {
     // puts need to track errors globally due to how the APIs currently work.
     multiAp = this.connection.getAsyncProcess();
     this.locator = new HRegionLocator(tableName, connection);
+    assert ObjectReleaseTracker.track(this);
   }
 
   /**
@@ -916,6 +918,7 @@ public class HTable implements Table {
       }
     }
     this.closed = true;
+    assert ObjectReleaseTracker.release(this);
   }
 
   // validate for well-formedness

@@ -45,6 +45,8 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.AsyncMetaTableAccessor;
 import org.apache.hadoop.hbase.CacheEvictionStats;
@@ -3517,49 +3519,72 @@ class RawAsyncHBaseAdmin implements AsyncAdmin {
       return failedFuture(e);
     }
     CompletableFuture<Void> future = new CompletableFuture<>();
-    addListener(ConnectionFactory.createAsyncConnection(peerConf), (conn, err) -> {
-      if (err != null) {
-        future.completeExceptionally(err);
-        return;
-      }
-      addListener(getDescriptor(tableName), (tableDesc, err1) -> {
-        if (err1 != null) {
-          future.completeExceptionally(err1);
+    CompletableFuture<AsyncConnection> cf = ConnectionFactory.createAsyncConnection(peerConf);
+    addListener(cf, (conn, err) -> {
+        if (err != null) {
+          future.completeExceptionally(err);
           return;
         }
-        AsyncAdmin peerAdmin = conn.getAdmin();
-        addListener(peerAdmin.tableExists(tableName), (exist, err2) -> {
-          if (err2 != null) {
-            future.completeExceptionally(err2);
+        addListener(getDescriptor(tableName), (tableDesc, err1) -> {
+          if (err1 != null) {
+            future.completeExceptionally(err1);
             return;
           }
-          if (!exist) {
-            CompletableFuture<Void> createTableFuture = null;
-            if (splits == null) {
-              createTableFuture = peerAdmin.createTable(tableDesc);
-            } else {
-              createTableFuture = peerAdmin.createTable(tableDesc, splits);
-            }
-            addListener(createTableFuture, (result, err3) -> {
-              if (err3 != null) {
-                future.completeExceptionally(err3);
-              } else {
-                future.complete(result);
+          AsyncAdmin peerAdmin = conn.getAdmin();
+          addListener(peerAdmin.tableExists(tableName), (exist, err2) -> {
+            if (err2 != null) {
+              try {
+                future.completeExceptionally(err2);
+              } finally {
+                IOUtils.closeQuietly(conn);
               }
-            });
-          } else {
-            addListener(compareTableWithPeerCluster(tableName, tableDesc, peer, peerAdmin),
-              (result, err4) -> {
-                if (err4 != null) {
-                  future.completeExceptionally(err4);
+              return;
+            }
+            if (!exist) {
+              CompletableFuture<Void> createTableFuture = null;
+              if (splits == null) {
+                createTableFuture = peerAdmin.createTable(tableDesc);
+              } else {
+                createTableFuture = peerAdmin.createTable(tableDesc, splits);
+              }
+              addListener(createTableFuture, (result, err3) -> {
+                if (err3 != null) {
+                  try {
+                    future.completeExceptionally(err3);
+                  } finally {
+                    IOUtils.closeQuietly(conn);
+                  }
                 } else {
-                  future.complete(result);
+                  try {
+                    future.complete(result);
+                  } finally {
+                    IOUtils.closeQuietly(conn);
+                  }
                 }
               });
-          }
+            } else {
+              addListener(compareTableWithPeerCluster(tableName, tableDesc, peer, peerAdmin),
+                  (result, err4) -> {
+                    if (err4 != null) {
+                      try {
+                        future.completeExceptionally(err4);
+                      } finally {
+                        IOUtils.closeQuietly(conn);
+                      }
+                    } else {
+                      try {
+                        future.complete(result);
+                      } finally {
+                        IOUtils.closeQuietly(conn);
+                      }
+                    }
+                  });
+            }
+          });
         });
-      });
+
     });
+
     return future;
   }
 

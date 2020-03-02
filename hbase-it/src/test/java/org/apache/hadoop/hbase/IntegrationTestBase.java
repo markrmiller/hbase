@@ -101,7 +101,9 @@ public abstract class IntegrationTestBase extends AbstractHBaseTool {
               .getResourceAsStream(chaosMonkeyPropsFile));
         } catch (IOException e) {
           LOG.warn(e.toString(), e);
-          System.exit(EXIT_FAILURE);
+          //System.exit(EXIT_FAILURE);
+          // nocommit
+          throw new RuntimeException();
         }
       }
     }

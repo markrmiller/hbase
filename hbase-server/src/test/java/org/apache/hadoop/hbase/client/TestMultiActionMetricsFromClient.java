@@ -44,17 +44,19 @@ public class TestMultiActionMetricsFromClient {
   private static final TableName TABLE_NAME = TableName.valueOf("test_table");
   private static final byte[] FAMILY = Bytes.toBytes("fam1");
   private static final byte[] QUALIFIER = Bytes.toBytes("qual");
+  private static Table TABLE;
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
     TEST_UTIL.startMiniCluster(1);
     TEST_UTIL.getHBaseCluster().waitForActiveAndReadyMaster();
     TEST_UTIL.waitUntilAllRegionsAssigned(TABLE_NAME.META_TABLE_NAME);
-    TEST_UTIL.createTable(TABLE_NAME, FAMILY);
+    TABLE = TEST_UTIL.createTable(TABLE_NAME, FAMILY);
   }
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
+    TABLE.close();
     TEST_UTIL.shutdownMiniCluster();
   }
 

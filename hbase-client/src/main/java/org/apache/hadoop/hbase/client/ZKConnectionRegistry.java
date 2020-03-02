@@ -32,6 +32,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.ClusterId;
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.exceptions.DeserializationException;
@@ -59,6 +60,7 @@ class ZKConnectionRegistry implements ConnectionRegistry {
   private final ZNodePaths znodePaths;
 
   ZKConnectionRegistry(Configuration conf) {
+    assert ObjectReleaseTracker.track(this);
     this.znodePaths = new ZNodePaths(conf);
     this.zk = new ReadOnlyZKClient(conf);
   }
@@ -232,5 +234,6 @@ class ZKConnectionRegistry implements ConnectionRegistry {
   @Override
   public void close() {
     zk.close();
+    assert ObjectReleaseTracker.release(this);
   }
 }

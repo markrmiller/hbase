@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -52,6 +53,11 @@ public class TestUpdateConfiguration {
     // Set master number and use default values for other options.
     StartMiniClusterOption option = StartMiniClusterOption.builder().numMasters(2).build();
     TEST_UTIL.startMiniCluster(option);
+  }
+
+  @AfterClass
+  public static void tearown() throws Exception {
+    TEST_UTIL.shutdownMiniCluster();
   }
 
   @Test

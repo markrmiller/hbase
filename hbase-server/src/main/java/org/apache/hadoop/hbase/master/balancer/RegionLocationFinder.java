@@ -324,4 +324,13 @@ class RegionLocationFinder {
   LoadingCache<RegionInfo, HDFSBlocksDistribution> getCache() {
     return cache;
   }
+
+  public void stop() {
+    executor.shutdownNow();
+    try {
+      executor.awaitTermination(15, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
 }

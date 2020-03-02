@@ -136,6 +136,10 @@ class RawAsyncTableImpl implements AsyncTable<AdvancedScanResultConsumer> {
     this.defaultScannerMaxResultSize = conn.connConf.getScannerMaxResultSize();
   }
 
+  @Override public void close() throws IOException {
+
+  }
+
   @Override
   public TableName getName() {
     return tableName;

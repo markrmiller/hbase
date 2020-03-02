@@ -165,7 +165,7 @@ public class ServerNonceManager {
         }
         oldResult.setHasWait();
         oldResult.wait(this.conflictWaitIterationMs); // operation is still active... wait and loop
-        if (stoppable.isStopping()) {
+        if (stoppable.isStopped()) {
           throw new InterruptedException("Server stopped");
         }
       }

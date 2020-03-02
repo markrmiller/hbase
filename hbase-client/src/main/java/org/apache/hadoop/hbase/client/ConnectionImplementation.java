@@ -54,6 +54,7 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HRegionLocation;
 import org.apache.hadoop.hbase.MasterNotRunningException;
 import org.apache.hadoop.hbase.MetaTableAccessor;
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -237,6 +238,7 @@ class ConnectionImplementation implements ClusterConnection, Closeable {
    * @param conf Configuration object
    */
   ConnectionImplementation(Configuration conf, ExecutorService pool, User user) throws IOException {
+    assert ObjectReleaseTracker.track(this);
     this.conf = conf;
     this.user = user;
     if (user != null && user.isLoginFromKeytab()) {
@@ -363,7 +365,7 @@ class ConnectionImplementation implements ClusterConnection, Closeable {
 
   @Override
   public Table getTable(TableName tableName) throws IOException {
-    return getTable(tableName, getBatchPool());
+    return  getTable(tableName, getBatchPool());
   }
 
   @Override
@@ -2033,20 +2035,7 @@ class ConnectionImplementation implements ClusterConnection, Closeable {
     if (authService != null) {
       authService.shutdown();
     }
-  }
-
-  /**
-   * Close the connection for good. On the off chance that someone is unable to close
-   * the connection, perhaps because it bailed out prematurely, the method
-   * below will ensure that this instance is cleaned up.
-   * Caveat: The JVM may take an unknown amount of time to call finalize on an
-   * unreachable object, so our hope is that every consumer cleans up after
-   * itself, like any good citizen.
-   */
-  @Override
-  protected void finalize() throws Throwable {
-    super.finalize();
-    close();
+    assert ObjectReleaseTracker.release(this);
   }
 
   @Override

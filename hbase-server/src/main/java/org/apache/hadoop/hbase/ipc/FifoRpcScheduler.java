@@ -18,6 +18,7 @@
 package org.apache.hadoop.hbase.ipc;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -61,7 +62,7 @@ public class FifoRpcScheduler extends RpcScheduler {
     LOG.info("Using {} as user call queue; handlerCount={}; maxQueueLength={}",
       this.getClass().getSimpleName(), handlerCount, maxQueueLength);
     this.executor = new ThreadPoolExecutor(
-        handlerCount,
+        Math.max(1, handlerCount / 2),
         handlerCount,
         60,
         TimeUnit.SECONDS,
@@ -73,6 +74,12 @@ public class FifoRpcScheduler extends RpcScheduler {
   @Override
   public void stop() {
     this.executor.shutdown();
+    try {
+      this.executor.awaitTermination(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    }
   }
 
   private static class FifoCallRunner implements Runnable {

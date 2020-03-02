@@ -1270,59 +1270,62 @@ public class TestAsyncProcess {
 
   @Test
   public void testBatch() throws IOException, InterruptedException {
-    ClusterConnection conn = new MyConnectionImpl(CONF);
-    HTable ht = (HTable) conn.getTable(DUMMY_TABLE);
-    ht.multiAp = new MyAsyncProcess(conn, CONF);
+    try (ClusterConnection conn = new MyConnectionImpl(CONF)) {
+      try (HTable ht = (HTable) conn.getTable(DUMMY_TABLE)) {
+        ht.multiAp = new MyAsyncProcess(conn, CONF);
 
-    List<Put> puts = new ArrayList<>(7);
-    puts.add(createPut(1, true));
-    puts.add(createPut(1, true));
-    puts.add(createPut(1, true));
-    puts.add(createPut(1, true));
-    puts.add(createPut(1, false)); // <=== the bad apple, position 4
-    puts.add(createPut(1, true));
-    puts.add(createPut(1, false)); // <=== another bad apple, position 6
+        List<Put> puts = new ArrayList<>(7);
+        puts.add(createPut(1, true));
+        puts.add(createPut(1, true));
+        puts.add(createPut(1, true));
+        puts.add(createPut(1, true));
+        puts.add(createPut(1, false)); // <=== the bad apple, position 4
+        puts.add(createPut(1, true));
+        puts.add(createPut(1, false)); // <=== another bad apple, position 6
 
-    Object[] res = new Object[puts.size()];
-    try {
-      ht.batch(puts, res);
-      Assert.fail();
-    } catch (RetriesExhaustedException expected) {
+        Object[] res = new Object[puts.size()];
+        try {
+          ht.batch(puts, res);
+          Assert.fail();
+        } catch (RetriesExhaustedException expected) {
+        }
+
+        Assert.assertEquals(success, res[0]);
+        Assert.assertEquals(success, res[1]);
+        Assert.assertEquals(success, res[2]);
+        Assert.assertEquals(success, res[3]);
+        Assert.assertEquals(failure, res[4]);
+        Assert.assertEquals(success, res[5]);
+        Assert.assertEquals(failure, res[6]);
+      }
     }
-
-    Assert.assertEquals(success, res[0]);
-    Assert.assertEquals(success, res[1]);
-    Assert.assertEquals(success, res[2]);
-    Assert.assertEquals(success, res[3]);
-    Assert.assertEquals(failure, res[4]);
-    Assert.assertEquals(success, res[5]);
-    Assert.assertEquals(failure, res[6]);
   }
   @Test
   public void testErrorsServers() throws IOException {
     Configuration configuration = new Configuration(CONF);
-    ClusterConnection conn = new MyConnectionImpl(configuration);
-    MyAsyncProcess ap = new MyAsyncProcess(conn, configuration);
-    BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
-    BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
-    configuration.setBoolean(ConnectionImplementation.RETRIES_BY_SERVER_KEY, true);
+    try (ClusterConnection conn = new MyConnectionImpl(configuration)) {
+      MyAsyncProcess ap = new MyAsyncProcess(conn, configuration);
+      BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
+      BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
+      configuration.setBoolean(ConnectionImplementation.RETRIES_BY_SERVER_KEY, true);
 
-    Assert.assertNotNull(ap.createServerErrorTracker());
-    Assert.assertTrue(ap.serverTrackerTimeout > 200L);
-    ap.serverTrackerTimeout = 1L;
+      Assert.assertNotNull(ap.createServerErrorTracker());
+      Assert.assertTrue(ap.serverTrackerTimeout > 200L);
+      ap.serverTrackerTimeout = 1L;
 
-    Put p = createPut(1, false);
-    mutator.mutate(p);
+      Put p = createPut(1, false);
+      mutator.mutate(p);
 
-    try {
-      mutator.flush();
-      Assert.fail();
-    } catch (RetriesExhaustedWithDetailsException expected) {
-      assertEquals(1, expected.getNumExceptions());
-      assertTrue(expected.getRow(0) == p);
+      try {
+        mutator.flush();
+        Assert.fail();
+      } catch (RetriesExhaustedWithDetailsException expected) {
+        assertEquals(1, expected.getNumExceptions());
+        assertTrue(expected.getRow(0) == p);
+      }
+      // Checking that the ErrorsServers came into play and didn't make us stop immediately
+      Assert.assertEquals(NB_RETRIES + 1, ap.callsCt.get());
     }
-    // Checking that the ErrorsServers came into play and didn't make us stop immediately
-    Assert.assertEquals(NB_RETRIES + 1, ap.callsCt.get());
   }
 
   @Test
@@ -1332,81 +1335,83 @@ public class TestAsyncProcess {
     Configuration copyConf = new Configuration(CONF);
     copyConf.setLong(HConstants.HBASE_RPC_READ_TIMEOUT_KEY, readTimeout);
     copyConf.setLong(HConstants.HBASE_RPC_WRITE_TIMEOUT_KEY, writeTimeout);
-    ClusterConnection conn = new MyConnectionImpl(copyConf);
-    MyAsyncProcess ap = new MyAsyncProcess(conn, copyConf);
-    try (HTable ht = (HTable) conn.getTable(DUMMY_TABLE)) {
-      ht.multiAp = ap;
-      List<Get> gets = new LinkedList<>();
-      gets.add(new Get(DUMMY_BYTES_1));
-      gets.add(new Get(DUMMY_BYTES_2));
-      try {
-        ht.get(gets);
-      } catch (ClassCastException e) {
-        // No result response on this test.
-      }
-      assertEquals(readTimeout, ap.previousTimeout);
-      ap.previousTimeout = -1;
+    try (ClusterConnection conn = new MyConnectionImpl(copyConf)) {
+      MyAsyncProcess ap = new MyAsyncProcess(conn, copyConf);
+      try (HTable ht = (HTable) conn.getTable(DUMMY_TABLE)) {
+        ht.multiAp = ap;
+        List<Get> gets = new LinkedList<>();
+        gets.add(new Get(DUMMY_BYTES_1));
+        gets.add(new Get(DUMMY_BYTES_2));
+        try {
+          ht.get(gets);
+        } catch (ClassCastException e) {
+          // No result response on this test.
+        }
+        assertEquals(readTimeout, ap.previousTimeout);
+        ap.previousTimeout = -1;
 
-      try {
-        ht.existsAll(gets);
-      } catch (ClassCastException e) {
-        // No result response on this test.
-      }
-      assertEquals(readTimeout, ap.previousTimeout);
-      ap.previousTimeout = -1;
+        try {
+          ht.existsAll(gets);
+        } catch (ClassCastException e) {
+          // No result response on this test.
+        }
+        assertEquals(readTimeout, ap.previousTimeout);
+        ap.previousTimeout = -1;
 
-      List<Delete> deletes = new LinkedList<>();
-      deletes.add(new Delete(DUMMY_BYTES_1));
-      deletes.add(new Delete(DUMMY_BYTES_2));
-      ht.delete(deletes);
-      assertEquals(writeTimeout, ap.previousTimeout);
+        List<Delete> deletes = new LinkedList<>();
+        deletes.add(new Delete(DUMMY_BYTES_1));
+        deletes.add(new Delete(DUMMY_BYTES_2));
+        ht.delete(deletes);
+        assertEquals(writeTimeout, ap.previousTimeout);
+      }
     }
   }
 
   @Test
   public void testErrors() throws IOException {
-    ClusterConnection conn = new MyConnectionImpl(CONF);
-    AsyncProcessWithFailure ap = new AsyncProcessWithFailure(conn, CONF, new IOException("test"));
-    BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
-    BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
+    try (ClusterConnection conn = new MyConnectionImpl(CONF)) {
+      AsyncProcessWithFailure ap = new AsyncProcessWithFailure(conn, CONF, new IOException("test"));
+      BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
+      BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
 
-    Assert.assertNotNull(ap.createServerErrorTracker());
+      Assert.assertNotNull(ap.createServerErrorTracker());
 
-    Put p = createPut(1, true);
-    mutator.mutate(p);
+      Put p = createPut(1, true);
+      mutator.mutate(p);
 
-    try {
-      mutator.flush();
-      Assert.fail();
-    } catch (RetriesExhaustedWithDetailsException expected) {
-      assertEquals(1, expected.getNumExceptions());
-      assertTrue(expected.getRow(0) == p);
+      try {
+        mutator.flush();
+        Assert.fail();
+      } catch (RetriesExhaustedWithDetailsException expected) {
+        assertEquals(1, expected.getNumExceptions());
+        assertTrue(expected.getRow(0) == p);
+      }
+      // Checking that the ErrorsServers came into play and didn't make us stop immediately
+      Assert.assertEquals(NB_RETRIES + 1, ap.callsCt.get());
     }
-    // Checking that the ErrorsServers came into play and didn't make us stop immediately
-    Assert.assertEquals(NB_RETRIES + 1, ap.callsCt.get());
   }
 
 
   @Test
   public void testCallQueueTooLarge() throws IOException {
-    ClusterConnection conn = new MyConnectionImpl(CONF);
-    AsyncProcessWithFailure ap =
-        new AsyncProcessWithFailure(conn, CONF, new CallQueueTooBigException());
-    BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
-    BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
-    Assert.assertNotNull(ap.createServerErrorTracker());
-    Put p = createPut(1, true);
-    mutator.mutate(p);
+    try (ClusterConnection conn = new MyConnectionImpl(CONF)) {
+      AsyncProcessWithFailure ap = new AsyncProcessWithFailure(conn, CONF, new CallQueueTooBigException());
+      BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
+      BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
+      Assert.assertNotNull(ap.createServerErrorTracker());
+      Put p = createPut(1, true);
+      mutator.mutate(p);
 
-    try {
-      mutator.flush();
-      Assert.fail();
-    } catch (RetriesExhaustedWithDetailsException expected) {
-      assertEquals(1, expected.getNumExceptions());
-      assertTrue(expected.getRow(0) == p);
+      try {
+        mutator.flush();
+        Assert.fail();
+      } catch (RetriesExhaustedWithDetailsException expected) {
+        assertEquals(1, expected.getNumExceptions());
+        assertTrue(expected.getRow(0) == p);
+      }
+      // Checking that the ErrorsServers came into play and didn't make us stop immediately
+      Assert.assertEquals(NB_RETRIES + 1, ap.callsCt.get());
     }
-    // Checking that the ErrorsServers came into play and didn't make us stop immediately
-    Assert.assertEquals(NB_RETRIES + 1, ap.callsCt.get());
   }
   /**
    * This test simulates multiple regions on 2 servers. We should have 2 multi requests and
@@ -1427,21 +1432,23 @@ public class TestAsyncProcess {
       gets.add(get);
     }
 
-    MyConnectionImpl2 con = new MyConnectionImpl2(hrls, CONF);
-    MyAsyncProcess ap = new MyAsyncProcess(con, CONF, con.nbThreads);
-    HTable ht = (HTable) con.getTable(DUMMY_TABLE, ap.service);
-    ht.multiAp = ap;
-    ht.batch(gets, null);
+    try (MyConnectionImpl2 con = new MyConnectionImpl2(hrls, CONF)) {
+      MyAsyncProcess ap = new MyAsyncProcess(con, CONF, con.nbThreads);
+      try (HTable ht = (HTable) con.getTable(DUMMY_TABLE, ap.service)) {
+        ht.multiAp = ap;
+        ht.batch(gets, null);
 
-    Assert.assertEquals(NB_REGS, ap.nbActions.get());
-    Assert.assertEquals("1 multi response per server", 2, ap.nbMultiResponse.get());
-    Assert.assertEquals("1 thread per server", 2, con.nbThreads.get());
+        Assert.assertEquals(NB_REGS, ap.nbActions.get());
+        Assert.assertEquals("1 multi response per server", 2, ap.nbMultiResponse.get());
+        Assert.assertEquals("1 thread per server", 2, con.nbThreads.get());
 
-    int nbReg = 0;
-    for (int i =0; i<NB_REGS; i++){
-      if (con.usedRegions[i]) nbReg++;
+        int nbReg = 0;
+        for (int i = 0; i < NB_REGS; i++) {
+          if (con.usedRegions[i]) nbReg++;
+        }
+        Assert.assertEquals("nbReg=" + nbReg, NB_REGS, nbReg);
+      }
     }
-    Assert.assertEquals("nbReg=" + nbReg, NB_REGS, nbReg);
   }
 
   @Test
@@ -1743,61 +1750,60 @@ public class TestAsyncProcess {
     final int retries = 1;
     myConf.setLong(HConstants.HBASE_CLIENT_PAUSE_FOR_CQTBE, specialPause);
     myConf.setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, retries);
-    ClusterConnection conn = new MyConnectionImpl(myConf);
-    AsyncProcessWithFailure ap =
-        new AsyncProcessWithFailure(conn, myConf, new CallQueueTooBigException());
-    BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
-    BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
+    try (ClusterConnection conn = new MyConnectionImpl(myConf)) {
+      AsyncProcessWithFailure ap = new AsyncProcessWithFailure(conn, myConf, new CallQueueTooBigException());
+      BufferedMutatorParams bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
+      BufferedMutatorImpl mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
 
-    Assert.assertNotNull(mutator.getAsyncProcess().createServerErrorTracker());
+      Assert.assertNotNull(mutator.getAsyncProcess().createServerErrorTracker());
 
-    Put p = createPut(1, true);
-    mutator.mutate(p);
+      Put p = createPut(1, true);
+      mutator.mutate(p);
 
-    long startTime = System.currentTimeMillis();
-    try {
-      mutator.flush();
-      Assert.fail();
-    } catch (RetriesExhaustedWithDetailsException expected) {
-      assertEquals(1, expected.getNumExceptions());
-      assertTrue(expected.getRow(0) == p);
-    }
-    long actualSleep = System.currentTimeMillis() - startTime;
-    long expectedSleep = 0L;
-    for (int i = 0; i < retries; i++) {
-      expectedSleep += ConnectionUtils.getPauseTime(specialPause, i);
-      // Prevent jitter in ConcurrentMapUtils#getPauseTime to affect result
-      actualSleep += (long) (specialPause * 0.01f);
-    }
-    LOG.debug("Expected to sleep " + expectedSleep + "ms, actually slept " + actualSleep + "ms");
-    Assert.assertTrue("Expected to sleep " + expectedSleep + " but actually " + actualSleep + "ms",
-      actualSleep >= expectedSleep);
+      long startTime = System.currentTimeMillis();
+      try {
+        mutator.flush();
+        Assert.fail();
+      } catch (RetriesExhaustedWithDetailsException expected) {
+        assertEquals(1, expected.getNumExceptions());
+        assertTrue(expected.getRow(0) == p);
+      }
+      long actualSleep = System.currentTimeMillis() - startTime;
+      long expectedSleep = 0L;
+      for (int i = 0; i < retries; i++) {
+        expectedSleep += ConnectionUtils.getPauseTime(specialPause, i);
+        // Prevent jitter in ConcurrentMapUtils#getPauseTime to affect result
+        actualSleep += (long) (specialPause * 0.01f);
+      }
+      LOG.debug("Expected to sleep " + expectedSleep + "ms, actually slept " + actualSleep + "ms");
+      Assert.assertTrue("Expected to sleep " + expectedSleep + " but actually " + actualSleep + "ms",
+          actualSleep >= expectedSleep);
 
-    // check and confirm normal IOE will use the normal pause
-    final long normalPause =
-        myConf.getLong(HConstants.HBASE_CLIENT_PAUSE, HConstants.DEFAULT_HBASE_CLIENT_PAUSE);
-    ap = new AsyncProcessWithFailure(conn, myConf, new IOException());
-    bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
-    mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
-    Assert.assertNotNull(mutator.getAsyncProcess().createServerErrorTracker());
-    mutator.mutate(p);
-    startTime = System.currentTimeMillis();
-    try {
-      mutator.flush();
-      Assert.fail();
-    } catch (RetriesExhaustedWithDetailsException expected) {
-      assertEquals(1, expected.getNumExceptions());
-      assertTrue(expected.getRow(0) == p);
+      // check and confirm normal IOE will use the normal pause
+      final long normalPause = myConf.getLong(HConstants.HBASE_CLIENT_PAUSE, HConstants.DEFAULT_HBASE_CLIENT_PAUSE);
+      ap = new AsyncProcessWithFailure(conn, myConf, new IOException());
+      bufferParam = createBufferedMutatorParams(ap, DUMMY_TABLE);
+      mutator = new BufferedMutatorImpl(conn, bufferParam, ap);
+      Assert.assertNotNull(mutator.getAsyncProcess().createServerErrorTracker());
+      mutator.mutate(p);
+      startTime = System.currentTimeMillis();
+      try {
+        mutator.flush();
+        Assert.fail();
+      } catch (RetriesExhaustedWithDetailsException expected) {
+        assertEquals(1, expected.getNumExceptions());
+        assertTrue(expected.getRow(0) == p);
+      }
+      actualSleep = System.currentTimeMillis() - startTime;
+      expectedSleep = 0L;
+      for (int i = 0; i < retries; i++) {
+        expectedSleep += ConnectionUtils.getPauseTime(normalPause, i);
+      }
+      // plus an additional pause to balance the program execution time
+      expectedSleep += normalPause;
+      LOG.debug("Expected to sleep " + expectedSleep + "ms, actually slept " + actualSleep + "ms");
+      Assert.assertTrue("Slept for too long: " + actualSleep + "ms", actualSleep <= expectedSleep);
     }
-    actualSleep = System.currentTimeMillis() - startTime;
-    expectedSleep = 0L;
-    for (int i = 0; i < retries; i++) {
-      expectedSleep += ConnectionUtils.getPauseTime(normalPause, i);
-    }
-    // plus an additional pause to balance the program execution time
-    expectedSleep += normalPause;
-    LOG.debug("Expected to sleep " + expectedSleep + "ms, actually slept " + actualSleep + "ms");
-    Assert.assertTrue("Slept for too long: " + actualSleep + "ms", actualSleep <= expectedSleep);
   }
 
   @Test

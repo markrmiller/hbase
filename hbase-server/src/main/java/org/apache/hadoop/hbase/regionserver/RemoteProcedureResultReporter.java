@@ -19,6 +19,8 @@ package org.apache.hadoop.hbase.regionserver;
 
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.hadoop.hbase.PleaseHoldException;
 import org.apache.hadoop.hbase.client.ConnectionUtils;
 import org.apache.hadoop.hbase.ipc.ServerNotRunningYetException;
@@ -71,10 +73,14 @@ class RemoteProcedureResultReporter extends Thread {
   public void run() {
     ReportProcedureDoneRequest.Builder builder = ReportProcedureDoneRequest.newBuilder();
     int tries = 0;
-    while (!server.isStopped()) {
+    while (!server.isStopping()) {
       if (builder.getResultCount() == 0) {
         try {
-          builder.addResult(results.take());
+          RemoteProcedureResult result = results.poll(15, TimeUnit.SECONDS);
+          if (result == null) {
+            continue;
+          }
+          builder.addResult(result);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           continue;

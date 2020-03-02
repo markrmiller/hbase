@@ -258,7 +258,7 @@ public class HBaseAdmin implements Admin {
   private final long pause;
   private final int numRetries;
   private final int syncWaitTimeout;
-  private boolean aborted;
+  private volatile boolean aborted;
   private int operationTimeout;
   private int rpcTimeout;
   private int getProcedureTimeout;

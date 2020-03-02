@@ -286,7 +286,7 @@ public class HMaster extends HRegionServer implements MasterServices {
             if (haltOnTimeout) {
               LOG.error("Zombie Master exiting. Thread dump to stdout");
               Threads.printThreadInfo(System.out, "Zombie HMaster");
-              System.exit(-1);
+              // System.exit(-1); nocommit
             }
           }
         }
@@ -1475,6 +1475,7 @@ public class HMaster extends HRegionServer implements MasterServices {
         LOG.error("Failed to stop master jetty server", e);
       }
     }
+    super.getChoreService().shutdown();
     stopChores();
     if (this.mobCompactThread != null) {
       this.mobCompactThread.close();
@@ -1584,17 +1585,19 @@ public class HMaster extends HRegionServer implements MasterServices {
 
 
   private void stopProcedureExecutor() {
-    if (procedureExecutor != null) {
+    ProcedureExecutor<MasterProcedureEnv> fprocedureExecutor = procedureExecutor;
+    if (fprocedureExecutor != null) {
       configurationManager.deregisterObserver(procedureExecutor.getEnvironment());
-      procedureExecutor.getEnvironment().getRemoteDispatcher().stop();
-      procedureExecutor.stop();
-      procedureExecutor.join();
-      procedureExecutor = null;
+      fprocedureExecutor.getEnvironment().getRemoteDispatcher().stop();
+      fprocedureExecutor.stop();
+      fprocedureExecutor.join();
+      fprocedureExecutor = null;
     }
 
-    if (procedureStore != null) {
-      procedureStore.stop(isAborted());
-      procedureStore = null;
+    ProcedureStore fprocedureStore = procedureStore;
+    if (fprocedureStore != null) {
+      fprocedureStore.stop(isAborted());
+      fprocedureStore = null;
     }
   }
 
@@ -2851,13 +2854,20 @@ public class HMaster extends HRegionServer implements MasterServices {
   @Override
   public void stop(String msg) {
     if (!isStopped()) {
+
       super.stop(msg);
       //clusterStatusPublisherChore.cleanup(); // nocommit - done by chores?
       if (this.activeMasterManager != null) {
         this.activeMasterManager.stop();
       }
+      try {
+        this.clusterSchemaService.stopAsync();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
       stopProcedureExecutor();
-      this.assignmentManager.stop();
+      if (this.assignmentManager != null) this.assignmentManager.stop();
+
     }
   }
 
@@ -3325,7 +3335,7 @@ public class HMaster extends HRegionServer implements MasterServices {
       Collection<TableDescriptor> allHtds;
       if (namespace != null && namespace.length() > 0) {
         // Do a check on the namespace existence. Will fail if does not exist.
-        this.clusterSchemaService.getNamespace(namespace);
+        NamespaceDescriptor ns = this.clusterSchemaService.getNamespace(namespace);
         allHtds = tableDescriptors.getByNamespace(namespace).values();
       } else {
         allHtds = tableDescriptors.getAll().values();

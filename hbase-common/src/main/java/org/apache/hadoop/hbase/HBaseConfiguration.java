@@ -106,11 +106,16 @@ public class HBaseConfiguration extends Configuration {
       System.setProperty("hbase.netty.eventloop.default.pool", "5");
 
 
+
+
+      conf.set("zookeeper.keep-alive.time", "10000"); // nocommit - look at explicit close in test from other branch
       conf.set("hbase.regionserver.abort.timeout", "15000");
       conf.set("hbase.regionserver.hostname", "127.0.0.1");
 
-      conf.set("hbase.regionserver.compactionChecker.majorCompactPriority", "5");
+      conf.set("hbase.region.replica.replication.threads.max", "15");
 
+
+      conf.set("hbase.regionserver.compactionChecker.majorCompactPriority", "5");
 
       conf.setInt("hbase.hfilearchiver.thread.pool.max", 5);
       conf.setInt("hbase.client.sync.wait.timeout.msec", 30000);
@@ -184,6 +189,9 @@ public class HBaseConfiguration extends Configuration {
       conf.setInt("hbase.ipc.server.priority.max.callqueue.length", 6);
 
       conf.setInt( "hbase.ipc.server.read.threadpool.size", 6);
+
+
+
 
     }
 
