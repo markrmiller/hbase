@@ -224,7 +224,7 @@ public class ChoreService implements ChoreServicer {
   /**
    * @return number of chores that this service currently has scheduled
    */
-  int getNumberOfScheduledChores() {
+  synchronized int getNumberOfScheduledChores() {
     return scheduledChores.size();
   }
 
@@ -232,14 +232,14 @@ public class ChoreService implements ChoreServicer {
    * @return number of chores that this service currently has scheduled that are missing their
    *         scheduled start time
    */
-  int getNumberOfChoresMissingStartTime() {
+  synchronized int getNumberOfChoresMissingStartTime() {
     return choresMissingStartTime.size();
   }
 
   /**
    * @return number of threads in the core pool of the underlying ScheduledThreadPoolExecutor
    */
-  int getCorePoolSize() {
+  synchronized int getCorePoolSize() {
     return scheduler.getCorePoolSize();
   }
 

@@ -1120,10 +1120,11 @@ public class MetaTableAccessor {
     if (tableName.equals(TableName.META_TABLE_NAME)) {
       return new TableState(tableName, TableState.State.ENABLED);
     }
-    Table metaHTable = getMetaHTable(conn);
-    Get get = new Get(tableName.getName()).addColumn(getTableFamily(), getTableStateColumn());
-    Result result = metaHTable.get(get);
-    return getTableState(result);
+    try (Table metaHTable = getMetaHTable(conn)) {
+      Get get = new Get(tableName.getName()).addColumn(getTableFamily(), getTableStateColumn());
+      Result result = metaHTable.get(get);
+      return getTableState(result);
+    }
   }
 
   /**

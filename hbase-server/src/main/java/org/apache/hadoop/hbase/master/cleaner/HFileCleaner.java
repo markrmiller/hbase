@@ -18,7 +18,9 @@
 package org.apache.hadoop.hbase.master.cleaner;
 
 import java.io.IOException;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -100,7 +102,7 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate>
   private int smallFileDeleteThreadNumber;
   private long cleanerThreadTimeoutMsec;
   private long cleanerThreadCheckIntervalMsec;
-  private List<Thread> threads = new ArrayList<Thread>();
+  private final List<Thread> threads = Collections.synchronizedList(new ArrayList<Thread>());
   private volatile boolean running;
 
   private AtomicLong deletedLargeFiles = new AtomicLong();
@@ -264,12 +266,13 @@ public class HFileCleaner extends CleanerChore<BaseHFileCleanerDelegate>
 
   protected void consumerLoop(BlockingQueue<HFileDeleteTask> queue) {
     try {
-      while (running) {
+      while (!getStopper().isStopping()) {
         HFileDeleteTask task = null;
         try {
-          task = queue.take();
+          task = queue.poll(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
           LOG.trace("Interrupted while trying to take a task from queue", e);
+          Thread.currentThread().interrupt();
           break;
         }
         if (task != null) {

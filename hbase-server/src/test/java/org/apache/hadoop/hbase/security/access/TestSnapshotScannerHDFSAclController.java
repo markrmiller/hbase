@@ -88,8 +88,7 @@ public class TestSnapshotScannerHDFSAclController {
     conf.set("fs.permissions.umask-mode", "027");
     // enable hbase hdfs acl feature
     conf.setBoolean(SnapshotScannerHDFSAclHelper.ACL_SYNC_TO_HDFS_ENABLE, true);
-    conf.setInt("dfs.datanode.max.transfer.threads", 40);
-    conf.setInt(HConstants.REGION_SERVER_HANDLER_COUNT, 30);
+
     // enable secure
     conf.set(User.HBASE_SECURITY_CONF_KEY, "simple");
     conf.set(SnapshotScannerHDFSAclHelper.SNAPSHOT_RESTORE_TMP_DIR,
@@ -923,11 +922,11 @@ public class TestSnapshotScannerHDFSAclController {
     assertEquals(0, FS.listStatus(tmpTableDir).length);
 
     // create table1 and snapshot
-    TestHDFSAclHelper.createTableAndPut(TEST_UTIL, table);
+    HDFSTestAclHelper.createTableAndPut(TEST_UTIL, table);
     admin = TEST_UTIL.getAdmin();
     aclTable = TEST_UTIL.getConnection().getTable(PermissionStorage.ACL_TABLE_NAME);
     admin.snapshot(snapshot, table);
-    TestHDFSAclHelper.canUserScanSnapshot(TEST_UTIL, grantUser, snapshot, 6);
+    HDFSTestAclHelper.canUserScanSnapshot(TEST_UTIL, grantUser, snapshot, 6);
   }
 
   static void checkUserAclEntry(FileSystem fs, List<Path> paths, String user,

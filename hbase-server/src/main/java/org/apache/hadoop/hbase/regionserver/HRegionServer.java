@@ -2504,7 +2504,9 @@ public class HRegionServer extends HasThread implements
       LOG.warn("Unable to report fatal error to master", t);
     }
 
-    scheduleAbortTimer();
+    // nocommit - no System.exit in tests
+    //scheduleAbortTimer();
+
     // shutdown should be run as the internal user
     stop(reason, true, null);
   }

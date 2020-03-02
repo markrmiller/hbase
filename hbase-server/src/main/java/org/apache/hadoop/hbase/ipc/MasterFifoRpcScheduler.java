@@ -70,11 +70,11 @@ public class MasterFifoRpcScheduler extends FifoRpcScheduler {
           + "rsReportMaxQueueLength={}",
       this.getClass().getSimpleName(), handlerCount, maxQueueLength, rsReportHandlerCount,
       rsRsreportMaxQueueLength);
-    this.executor = new ThreadPoolExecutor(handlerCount, handlerCount, 60, TimeUnit.SECONDS,
+    this.executor = new ThreadPoolExecutor(Math.max(1, handlerCount / 2), handlerCount, 60, TimeUnit.SECONDS,
         new ArrayBlockingQueue<Runnable>(maxQueueLength),
         new DaemonThreadFactory("MasterFifoRpcScheduler.call.handler"),
         new ThreadPoolExecutor.CallerRunsPolicy());
-    this.rsReportExecutor = new ThreadPoolExecutor(rsReportHandlerCount, rsReportHandlerCount, 60,
+    this.rsReportExecutor = new ThreadPoolExecutor(Math.max(1, rsReportHandlerCount / 2), rsReportHandlerCount, 60,
         TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(rsRsreportMaxQueueLength),
         new DaemonThreadFactory("MasterFifoRpcScheduler.RSReport.handler"),
         new ThreadPoolExecutor.CallerRunsPolicy());
@@ -84,6 +84,13 @@ public class MasterFifoRpcScheduler extends FifoRpcScheduler {
   public void stop() {
     this.executor.shutdown();
     this.rsReportExecutor.shutdown();
+
+    try {
+      this.executor.awaitTermination(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

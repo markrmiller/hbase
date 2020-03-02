@@ -22,6 +22,8 @@ import static org.apache.hadoop.hbase.client.ConnectionUtils.allOf;
 import static org.apache.hadoop.hbase.client.ConnectionUtils.toCheckExistenceOnly;
 
 import com.google.protobuf.RpcChannel;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +50,8 @@ import org.apache.hbase.thirdparty.com.google.common.base.Preconditions;
  */
 @InterfaceAudience.Public
 public interface AsyncTable<C extends ScanResultConsumerBase> {
+
+  void close() throws IOException;
 
   /**
    * Gets the fully qualified table name instance of this table.

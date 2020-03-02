@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.mob.MobConstants;
 import org.apache.hadoop.hbase.snapshot.MobSnapshotTestingUtils;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.experimental.categories.Category;
@@ -41,6 +42,11 @@ public class TestMobRestoreSnapshotFromClientClone extends RestoreSnapshotFromCl
   public static void setupCluster() throws Exception {
     setupConf(TEST_UTIL.getConfiguration());
     TEST_UTIL.startMiniCluster(3);
+  }
+
+  @AfterClass
+  public static void tearCluster() throws Exception {
+    TEST_UTIL.shutdownMiniCluster();
   }
 
   protected static void setupConf(Configuration conf) {

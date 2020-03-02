@@ -1735,7 +1735,7 @@ public class HBaseFsck extends Configured implements Closeable {
       @Override
       public void abort(String why, Throwable e) {
         LOG.error(why, e);
-        System.exit(1);
+        // nocommit - pls not in tests  System.exit(1);
       }
 
       @Override

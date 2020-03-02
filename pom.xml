@@ -579,12 +579,13 @@
             <skip>${surefire.skipFirstPart}</skip>
             <forkCount>${surefire.firstPartForkCount}</forkCount>
             <reuseForks>false</reuseForks>
-            <reportsDirectory>${surefire.reportsDirectory}</reportsDirectory>
-            <tempDir>${surefire.tempDir}</tempDir>
+            <reportsDirectory>${surefire.reportsDirectory}-${surefire.forkNumber}</reportsDirectory>
+            <tempDir>${surefire.tempDir}-${surefire.forkNumber}</tempDir>
             <testFailureIgnore>${surefire.testFailureIgnore}</testFailureIgnore>
             <forkedProcessTimeoutInSeconds>${surefire.timeout}</forkedProcessTimeoutInSeconds>
             <redirectTestOutputToFile>${test.output.tofile}</redirectTestOutputToFile>
             <systemPropertyVariables>
+              <test.build.classes>${test.build.classes}</test.build.classes>
               <test.build.classes>${test.build.classes}</test.build.classes>
             </systemPropertyVariables>
             <excludes>
@@ -1426,8 +1427,8 @@
       default Xmx value is 2800m. Use -Dsurefire.Xmx=xxg to run tests with different JVM Xmx value.
       this value is managed separately for jdk11.
     -->
-    <surefire.Xmx>2800m</surefire.Xmx>
-    <surefire.cygwinXmx>2800m</surefire.cygwinXmx>
+    <surefire.Xmx>1400m</surefire.Xmx>
+    <surefire.cygwinXmx>1400m</surefire.cygwinXmx>
     <!--Mark our test runs with '-Dhbase.build.id' so we can identify a surefire test as ours in a process listing
 
       And for netty eventloops that have no explicit configuration, netty sets
@@ -1439,6 +1440,7 @@
       -Djava.awt.headless=true -Djdk.net.URLClassPath.disableClassPathURLCheck=true
       -Dorg.apache.hbase.thirdparty.io.netty.leakDetection.level=advanced
       -Dio.netty.eventLoopThreads=3
+      -XX:+AlwaysPreTouch -XX:+UseTransparentHugePages -XX:+UseParallelGC -XX:TieredStopAtLevel=1 -XX:ActiveProcessorCount=1 -Xss2024k
     </hbase-surefire.argLine>
     <hbase-surefire.cygwin-argLine>-enableassertions -Xmx${surefire.cygwinXmx}
       -Djava.security.egd=file:/dev/./urandom -Djava.net.preferIPv4Stack=true

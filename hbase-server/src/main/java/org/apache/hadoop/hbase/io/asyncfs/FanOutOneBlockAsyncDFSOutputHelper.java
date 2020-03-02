@@ -527,11 +527,21 @@ public final class FanOutOneBlockAsyncDFSOutputHelper {
           PIPELINE_SETUP_CREATE, summer, eventLoopGroup, channelClass);
         for (int i = 0, n = futureList.size(); i < n; i++) {
           try {
-            datanodeList.add(futureList.get(i).syncUninterruptibly().getNow());
+            Future<Channel> f = futureList.get(i);
+            datanodeList.add(f.get(15, TimeUnit.SECONDS)); // nocommit
           } catch (Exception e) {
             // exclude the broken DN next time
             excludesNodes = ArrayUtils.add(excludesNodes, locatedBlock.getLocations()[i]);
-            throw e;
+            try {
+              throw e;
+            } catch (InterruptedException ex) {
+              Thread.currentThread().interrupt();
+              throw new InterruptedIOException();
+            } catch (ExecutionException ex) {
+              throw new IOException(ex);
+            } catch (TimeoutException ex) {
+              throw new IOException(ex);
+            }
           }
         }
         Encryptor encryptor = createEncryptor(conf, stat, client);

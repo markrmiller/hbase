@@ -61,6 +61,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Waiter.ExplainingPredicate;
 import org.apache.hadoop.hbase.Waiter.Predicate;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.AsyncConnection;
 import org.apache.hadoop.hbase.client.BufferedMutator;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
@@ -216,7 +217,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
   /**
    * Shared cluster connection.
    */
-  private volatile Connection connection;
+  private Connection connection;
 
   /** Filesystem URI used for map-reduce mini-cluster setup */
   private static String FS_URI;
@@ -1154,13 +1155,15 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
     // Populate the master address configuration from mini cluster configuration.
     conf.set(HConstants.MASTER_ADDRS_KEY, MasterRegistry.getMasterAddr(c));
     // Don't leave here till we've done a successful scan of the hbase:meta
-    Table t = getConnection().getTable(TableName.META_TABLE_NAME);
+    Connection conn = getConnection();
+    Table t = conn.getTable(TableName.META_TABLE_NAME);
     ResultScanner s = t.getScanner(new Scan());
     while (s.next() != null) {
       continue;
     }
     s.close();
     t.close();
+
 
     getAdmin(); // create immediately the hbaseAdmin
     LOG.info("Minicluster is up; activeMaster={}", getHBaseCluster().getMaster());
@@ -1268,31 +1271,33 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
     invalidateConnection();
   }
 
-  public void restartHBaseCluster(StartMiniClusterOption option)
+  public synchronized  void restartHBaseCluster(StartMiniClusterOption option)
       throws IOException, InterruptedException {
     if (hbaseAdmin != null) {
       hbaseAdmin.close();
       hbaseAdmin = null;
     }
+
     if (this.connection != null) {
-      this.connection.close();
-      this.connection = null;
+        this.connection.close();
+        this.connection = null;
     }
+
     this.hbaseCluster =
         new MiniHBaseCluster(this.conf, option.getNumMasters(), option.getNumAlwaysStandByMasters(),
             option.getNumRegionServers(), option.getRsPorts(), option.getMasterClass(),
             option.getRsClass());
     // Don't leave here till we've done a successful scan of the hbase:meta
-    Connection conn = ConnectionFactory.createConnection(this.conf);
-    Table t = conn.getTable(TableName.META_TABLE_NAME);
-    ResultScanner s = t.getScanner(new Scan());
-    while (s.next() != null) {
-      // do nothing
+    try (Connection conn = ConnectionFactory.createConnection(this.conf)) {
+      Table t = conn.getTable(TableName.META_TABLE_NAME);
+      ResultScanner s = t.getScanner(new Scan());
+      while (s.next() != null) {
+        // do nothing
+      }
+      LOG.info("HBase has been restarted");
+      s.close();
+      t.close();
     }
-    LOG.info("HBase has been restarted");
-    s.close();
-    t.close();
-    conn.close();
   }
 
   /**
@@ -1358,15 +1363,17 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
   }
 
   // close hbase admin, close current connection and reset MIN MAX configs for RS.
-  private void cleanup() throws IOException {
+  private synchronized  void cleanup() throws IOException {
     if (hbaseAdmin != null) {
       hbaseAdmin.close();
       hbaseAdmin = null;
     }
+
     if (this.connection != null) {
       this.connection.close();
       this.connection = null;
     }
+
     // unset the configuration for MIN and MAX RS to start
     conf.setInt(ServerManager.WAIT_ON_REGIONSERVERS_MINTOSTART, -1);
     conf.setInt(ServerManager.WAIT_ON_REGIONSERVERS_MAXTOSTART, -1);
@@ -3135,7 +3142,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
    * @return A Connection that can be shared. Don't close. Will be closed on shutdown of cluster.
    * @throws IOException
    */
-  public Connection getConnection() throws IOException {
+  public synchronized Connection getConnection() throws IOException {
     if (this.connection == null) {
       this.connection = ConnectionFactory.createConnection(this.conf);
     }

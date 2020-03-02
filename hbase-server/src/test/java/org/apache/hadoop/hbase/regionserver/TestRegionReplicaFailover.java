@@ -57,7 +57,6 @@ import org.slf4j.LoggerFactory;
  * Tests failover of secondary region replicas.
  */
 @Category(LargeTests.class)
-@Ignore // nocommit - needs a litle time
 public class TestRegionReplicaFailover {
 
   @ClassRule
@@ -107,9 +106,6 @@ public class TestRegionReplicaFailover {
 
   @After
   public void after() throws Exception {
-    if (htd != null) {
-      HTU.deleteTableIfAny(htd.getTableName());
-    }
     HTU.shutdownMiniCluster();
   }
 
@@ -156,6 +152,7 @@ public class TestRegionReplicaFailover {
    * Tests the case where killing a primary region with unflushed data recovers
    */
   @Test
+  @Ignore // nocommit
   public void testPrimaryRegionKill() throws Exception {
     try (Connection connection = ConnectionFactory.createConnection(HTU.getConfiguration());
         Table table = connection.getTable(htd.getTableName())) {

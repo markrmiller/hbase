@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HRegionLocation;
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
 import org.apache.hadoop.hbase.RegionLocations;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
@@ -161,8 +162,10 @@ public class HConnectionTestingUtility {
    */
   public static ClusterConnection getSpiedConnection(final Configuration conf)
   throws IOException {
+    ConnectionImplementation conn = new ConnectionImplementation(conf, null, null);
     ConnectionImplementation connection =
-      Mockito.spy(new ConnectionImplementation(conf, null, null));
+      Mockito.spy(conn);
+    ObjectReleaseTracker.release(conn); // the spy will track itself
     return connection;
   }
 

@@ -169,19 +169,21 @@ public class LogCleaner extends CleanerChore<BaseLogCleanerDelegate>
   }
 
   private void deleteFile() {
-    while (true) {
+    while (!getStopper().isStopping()) {
       try {
-        final CleanerContext context = pendingDelete.take();
-        Preconditions.checkNotNull(context);
-        FileStatus oldWalFile = context.getTargetToClean();
-        try {
-          LOG.debug("Deleting {}", oldWalFile);
-          boolean succeed = this.fs.delete(oldWalFile.getPath(), false);
-          context.setResult(succeed);
-        } catch (IOException e) {
-          // fs.delete() fails.
-          LOG.warn("Failed to delete old WAL file", e);
-          context.setResult(false);
+        final CleanerContext context = pendingDelete.poll(15, TimeUnit.SECONDS);
+        if (context != null) {
+          Preconditions.checkNotNull(context);
+          FileStatus oldWalFile = context.getTargetToClean();
+          try {
+            LOG.debug("Deleting {}", oldWalFile);
+            boolean succeed = this.fs.delete(oldWalFile.getPath(), false);
+            context.setResult(succeed);
+          } catch (IOException e) {
+            // fs.delete() fails.
+            LOG.warn("Failed to delete old WAL file", e);
+            context.setResult(false);
+          }
         }
       } catch (InterruptedException ite) {
         // It is most likely from configuration changing request
@@ -191,8 +193,8 @@ public class LogCleaner extends CleanerChore<BaseLogCleanerDelegate>
         Thread.currentThread().interrupt();
         return;
       }
-      LOG.trace("Exiting");
     }
+    LOG.trace("Exiting");
   }
 
   @Override

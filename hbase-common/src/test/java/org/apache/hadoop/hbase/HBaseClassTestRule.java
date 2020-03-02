@@ -18,13 +18,25 @@
 package org.apache.hadoop.hbase;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+
+import java.io.FileDescriptor;
+import java.io.FilePermission;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.InetAddress;
+import java.net.SocketPermission;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.Permission;
+import java.security.PrivilegedAction;
+import java.security.Security;
+import java.security.SecurityPermission;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.PropertyPermission;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import org.apache.hadoop.hbase.testclassification.IntegrationTests;
@@ -45,6 +57,8 @@ import org.slf4j.LoggerFactory;
 import org.apache.hbase.thirdparty.com.google.common.annotations.VisibleForTesting;
 import org.apache.hbase.thirdparty.com.google.common.collect.Iterables;
 import org.apache.hbase.thirdparty.com.google.common.collect.Sets;
+import sun.reflect.CallerSensitive;
+import sun.security.util.SecurityConstants;
 
 /**
  * The class level TestRule for all the tests. Every test class should have a {@code ClassRule} with
@@ -56,6 +70,108 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Sets;
 @InterfaceAudience.Private
 public final class HBaseClassTestRule implements TestRule {
   private static final Logger LOG = LoggerFactory.getLogger(HBaseClassTestRule.class);
+
+  private static class ExitTrappedException extends SecurityException {
+  }
+
+  private static void forbidSystemExitCall() {
+    final SecurityManager securityManager = new SecurityManager() {
+      public void checkPermission(Permission permission) {
+        if ("exitVM".equals(permission.getName())) {
+          throw new ExitTrappedException();
+        }
+      }
+
+
+      public void checkPermission(Permission var1, Object var2) {
+
+      }
+      public void checkSecurityAccess(String var1) {
+
+      }
+      public void checkConnect(String var1, int var2, Object var3) {
+
+      }
+
+      public void checkWrite(String var1) {
+
+      }
+
+      public void checkDelete(String var1) {
+
+      }
+
+      public void checkConnect(String var1, int var2) {
+
+      }
+      public void checkLink(String var1) {
+
+      }
+
+      public void checkRead(FileDescriptor var1) {
+
+      }
+
+      public void checkAccess(Thread var1) {
+
+      }
+
+      public void checkAccess(ThreadGroup var1) {
+
+      }
+      public void checkCreateClassLoader() {
+
+      }
+
+      public void checkListen(int var1) {
+
+      }
+
+      public void checkAccept(String var1, int var2) {
+
+      }
+
+      public void checkMulticast(InetAddress var1) {
+
+      }
+
+      public void checkMulticast(InetAddress var1, byte var2) {
+
+      }
+
+      public void checkPropertiesAccess() {
+
+      }
+
+      public void checkPropertyAccess(String var1) {
+
+      }
+
+      public void checkPackageAccess(String var1) {
+
+      }
+
+      public void checkPackageDefinition(String var1) {
+
+      }
+
+      public void checkSetFactory() {
+
+
+      }
+      public void checkMemberAccess(Class<?> var1, int var2) {
+
+      }
+
+
+    };
+    System.setSecurityManager(securityManager);
+  }
+
+  static {
+    forbidSystemExitCall();
+  }
+
   public static final Set<Class<?>> UNIT_TEST_CLASSES = Collections.unmodifiableSet(
       Sets.<Class<?>> newHashSet(SmallTests.class, MediumTests.class, LargeTests.class));
 

@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.StartMiniClusterOption;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -42,6 +43,9 @@ public class TestUpdateConfiguration extends AbstractTestUpdateConfiguration {
   public static final HBaseClassTestRule CLASS_RULE =
       HBaseClassTestRule.forClass(TestUpdateConfiguration.class);
 
+  @Rule
+  public TestName name = new TestName();
+
   private static final Logger LOG = LoggerFactory.getLogger(TestUpdateConfiguration.class);
   private final static HBaseTestingUtility TEST_UTIL = new HBaseTestingUtility();
 
@@ -53,8 +57,10 @@ public class TestUpdateConfiguration extends AbstractTestUpdateConfiguration {
     addResourceToRegionServerConfiguration(TEST_UTIL);
   }
 
-  @Rule
-  public TestName name = new TestName();
+  @AfterClass
+  public static void tearown() throws Exception {
+    TEST_UTIL.shutdownMiniCluster();
+  }
 
   @Test
   public void testOnlineConfigChange() throws IOException {
