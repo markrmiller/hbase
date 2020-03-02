@@ -1522,6 +1522,7 @@ public abstract class BaseLoadBalancer implements LoadBalancer {
   @Override
   public void stop(String why) {
     LOG.info("Load Balancer stop requested: "+why);
+    regionFinder.stop();
     stopped = true;
   }
 

@@ -21,6 +21,8 @@ package org.apache.hadoop.hbase.master;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -53,10 +55,8 @@ public class CachedClusterId {
   // avoid multiple fetches from FS and let only one thread fetch the information.
   AtomicBoolean fetchInProgress = new AtomicBoolean(false);
 
-  // When true, it means that the cluster ID has been fetched successfully from fs.
-  private AtomicBoolean isClusterIdSet = new AtomicBoolean(false);
   // Immutable once set and read multiple times.
-  private ClusterId clusterId;
+  private AtomicReference<ClusterId> clusterId = new AtomicReference<>();
 
   // cache stats for testing.
   private AtomicInteger cacheMisses = new AtomicInteger(0);
@@ -70,22 +70,22 @@ public class CachedClusterId {
    * Succeeds only once, when setting to a non-null value. Overwrites are not allowed.
    */
   private void setClusterId(ClusterId id) {
-    if (id == null || isClusterIdSet.get()) {
+    if (id == null ||clusterId.get() != null) {
       return;
     }
-    clusterId = id;
-    isClusterIdSet.set(true);
+    clusterId.set(id);
   }
 
   /**
    * Returns a cached copy of the cluster ID. null if the cache is not populated.
    */
   private String getClusterId() {
-    if (!isClusterIdSet.get()) {
+    ClusterId id = clusterId.get();
+    if (id == null) {
       return null;
     }
     // It is ok to read without a lock since clusterId is immutable once set.
-    return clusterId.toString();
+    return id.toString();
   }
 
   /**

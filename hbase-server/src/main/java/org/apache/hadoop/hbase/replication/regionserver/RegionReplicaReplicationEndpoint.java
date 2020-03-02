@@ -199,7 +199,7 @@ public class RegionReplicaReplicationEndpoint extends HBaseReplicationEndpoint {
             conf.getInt(HConstants.HBASE_CLIENT_MAX_TOTAL_TASKS,
               HConstants.DEFAULT_HBASE_CLIENT_MAX_TOTAL_TASKS));
     ThreadPoolExecutor tpe = new ThreadPoolExecutor(
-      maxThreads,
+      Math.max(1, maxThreads / 2),
       maxThreads,
       keepAliveTime,
       TimeUnit.SECONDS,

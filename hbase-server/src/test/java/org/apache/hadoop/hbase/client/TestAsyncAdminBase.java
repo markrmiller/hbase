@@ -20,7 +20,9 @@ package org.apache.hadoop.hbase.client;
 import static org.apache.hadoop.hbase.client.AsyncProcess.START_LOG_ERRORS_AFTER_COUNT_KEY;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
@@ -62,11 +64,13 @@ public abstract class TestAsyncAdminBase {
   public Supplier<AsyncAdmin> getAdmin;
 
   private static AsyncAdmin getRawAsyncAdmin() {
-    return ASYNC_CONN.getAdmin();
+    AsyncAdmin admin = ASYNC_CONN.getAdmin();
+    return admin;
   }
 
   private static AsyncAdmin getAsyncAdmin() {
-    return ASYNC_CONN.getAdmin(ForkJoinPool.commonPool());
+    AsyncAdmin admin = ASYNC_CONN.getAdmin(ForkJoinPool.commonPool());
+    return admin;
   }
 
   @Parameters

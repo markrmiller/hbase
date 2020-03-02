@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.regex.Pattern;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -41,12 +43,14 @@ import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import sun.nio.ch.IOUtil;
 
 /**
  * Class to test asynchronous replication admin operations when more than 1 cluster
@@ -60,6 +64,7 @@ public class TestAsyncReplicationAdminApiWithClusters extends TestAsyncAdminBase
       HBaseClassTestRule.forClass(TestAsyncReplicationAdminApiWithClusters.class);
 
   private final static String ID_SECOND = "2";
+  private static AsyncConnection ASYNC_CONN2;
 
   private static HBaseTestingUtility TEST_UTIL2;
   private static Configuration conf2;
@@ -67,8 +72,8 @@ public class TestAsyncReplicationAdminApiWithClusters extends TestAsyncAdminBase
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_RPC_TIMEOUT_KEY, 60000);
-    TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, 120000);
+    TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_RPC_TIMEOUT_KEY, 15000);
+    TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_CLIENT_OPERATION_TIMEOUT, 15000);
     TEST_UTIL.getConfiguration().setInt(HConstants.HBASE_CLIENT_RETRIES_NUMBER, 2);
     TEST_UTIL.getConfiguration().setInt(START_LOG_ERRORS_AFTER_COUNT_KEY, 0);
     TEST_UTIL.startMiniCluster();
@@ -78,12 +83,23 @@ public class TestAsyncReplicationAdminApiWithClusters extends TestAsyncAdminBase
     conf2.set(HConstants.ZOOKEEPER_ZNODE_PARENT, "/2");
     TEST_UTIL2 = new HBaseTestingUtility(conf2);
     TEST_UTIL2.startMiniCluster();
-    admin2 =
-        ConnectionFactory.createAsyncConnection(TEST_UTIL2.getConfiguration()).get().getAdmin();
+
+    ASYNC_CONN2 = ConnectionFactory.createAsyncConnection(TEST_UTIL2.getConfiguration()).get();
+    admin2 = ASYNC_CONN2.getAdmin();
 
     ReplicationPeerConfig rpc = new ReplicationPeerConfig();
     rpc.setClusterKey(TEST_UTIL2.getClusterKey());
+
     ASYNC_CONN.getAdmin().addReplicationPeer(ID_SECOND, rpc).join();
+
+  }
+
+  @AfterClass
+  public static void tearDownAfterClass() throws Exception {
+    IOUtils.closeQuietly(ASYNC_CONN);
+    IOUtils.closeQuietly(ASYNC_CONN2);
+    TEST_UTIL.shutdownMiniCluster();
+    TEST_UTIL2.shutdownMiniCluster();
   }
 
   @Override

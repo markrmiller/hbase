@@ -283,7 +283,7 @@ public abstract class ScheduledChore implements Runnable {
 
   public synchronized void cancel(boolean mayInterruptIfRunning) {
     if (isScheduled()) choreServicer.cancelChore(this, mayInterruptIfRunning);
-
+    cleanup();
     choreServicer = null;
   }
 

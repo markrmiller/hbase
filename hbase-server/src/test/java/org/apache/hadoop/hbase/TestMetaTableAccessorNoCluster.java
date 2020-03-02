@@ -224,7 +224,7 @@ public class TestMetaTableAccessorNoCluster {
       Mockito.verify(implementation, Mockito.times(4)).
         scan((RpcController)Mockito.any(), (ScanRequest)Mockito.any());
     } finally {
-      if (connection != null && !connection.isClosed()) {
+      if (connection != null) {
         connection.close();
       }
       zkw.close();

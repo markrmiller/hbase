@@ -171,4 +171,8 @@ public class NamespaceAuditor {
   public boolean isInitialized() {
     return stateManager.isInitialized();
   }
+
+  public void stop() {
+
+  }
 }

@@ -39,6 +39,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -46,6 +47,7 @@ import org.junit.experimental.categories.Category;
  * Testcase for HBASE-20242
  */
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore // nocommit test is flakey
 public class TestOpenSeqNumUnexpectedIncrease {
 
   @ClassRule

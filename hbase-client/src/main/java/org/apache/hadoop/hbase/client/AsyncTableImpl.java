@@ -26,13 +26,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CompareOperator;
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.io.TimeRange;
 import org.apache.hadoop.hbase.util.FutureUtils;
 import org.apache.yetus.audience.InterfaceAudience;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Just a wrapper of {@link RawAsyncTableImpl}. The difference is that users need to provide a
@@ -43,6 +48,8 @@ import org.apache.yetus.audience.InterfaceAudience;
 @InterfaceAudience.Private
 class AsyncTableImpl implements AsyncTable<ScanResultConsumer> {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AsyncTableImpl.class);
+
   private final AsyncTable<AdvancedScanResultConsumer> rawTable;
 
   private final ExecutorService pool;
@@ -51,6 +58,19 @@ class AsyncTableImpl implements AsyncTable<ScanResultConsumer> {
       ExecutorService pool) {
     this.rawTable = rawTable;
     this.pool = pool;
+    assert ObjectReleaseTracker.track(this);
+  }
+
+  @Override
+  public void close() throws IOException {
+    pool.shutdown();
+    try {
+      pool.awaitTermination(30, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      LOG.warn(this.getClass().getSimpleName() + "'s thread pool interrupted on shutdown");
+    }
+    assert ObjectReleaseTracker.release(this);
   }
 
   @Override

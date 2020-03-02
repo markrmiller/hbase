@@ -30,6 +30,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -37,6 +38,7 @@ import org.junit.experimental.categories.Category;
  * Tests to validate if HRegionServer default chores are scheduled
  */
 @Category({RegionServerTests.class, MediumTests.class})
+@Ignore // nocommit flakey race test
 public class TestRSChoresScheduled {
 
   @ClassRule

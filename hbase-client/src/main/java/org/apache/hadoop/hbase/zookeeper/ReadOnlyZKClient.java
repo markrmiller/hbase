@@ -309,6 +309,7 @@ public final class ReadOnlyZKClient implements Closeable {
       try {
         zookeeper.close();
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
       zookeeper = null;
     }
@@ -323,12 +324,13 @@ public final class ReadOnlyZKClient implements Closeable {
   }
 
   private void run() {
-    for (;;) {
+    for (; ; ) {
       Task task;
       try {
         task = tasks.poll(keepAliveTimeMs, TimeUnit.MILLISECONDS);
       } catch (InterruptedException e) {
-        continue;
+        Thread.currentThread().interrupt();
+        break;
       }
       if (task == CLOSE) {
         break;
@@ -336,22 +338,24 @@ public final class ReadOnlyZKClient implements Closeable {
       if (task == null) {
         if (pendingRequests.get() == 0) {
           LOG.trace("{} to {} inactive for {}ms; closing (Will reconnect when new requests)",
-            getId(), connectString, keepAliveTimeMs);
+              getId(), connectString, keepAliveTimeMs);
           closeZk();
         }
-        continue;
       }
-      if (!task.needZk()) {
-        task.exec(null);
-      } else {
-        ZooKeeper zk;
-        try {
-          zk = getZk();
-        } catch (IOException e) {
-          task.connectFailed(e);
-          continue;
+
+      if (task != null) {
+        if (!task.needZk()) {
+          task.exec(null);
+        } else {
+          ZooKeeper zk;
+          try {
+            zk = getZk();
+          } catch (IOException e) {
+            task.connectFailed(e);
+            continue;
+          }
+          task.exec(zk);
         }
-        task.exec(zk);
       }
     }
     closeZk();

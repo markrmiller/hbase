@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.security.UserProvider;
 import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -57,6 +58,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 import org.mockito.ArgumentMatcher;
+import org.mockito.internal.util.io.IOUtil;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -206,6 +208,11 @@ public class TestAsyncTableRpcPriority {
         return stub;
       }
     };
+  }
+
+  @After
+  public void tearDown() throws IOException {
+    IOUtil.closeQuietly(conn);
   }
 
   private HBaseRpcController assertPriority(int priority) {

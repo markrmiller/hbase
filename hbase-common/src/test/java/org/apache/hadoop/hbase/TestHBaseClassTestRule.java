@@ -18,6 +18,8 @@
 package org.apache.hadoop.hbase;
 
 import static junit.framework.TestCase.assertEquals;
+
+import java.security.Permission;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;

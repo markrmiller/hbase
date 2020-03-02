@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.NavigableSet;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
@@ -75,10 +76,10 @@ public class TableNamespaceManager implements Stoppable {
   private volatile boolean stopped = false;
 
   private Configuration conf;
-  private MasterServices masterServices;
-  private Table nsTable = null; // FindBugs: IS2_INCONSISTENT_SYNC TODO: Access is not synchronized
-  private ZKNamespaceManager zkNamespaceManager;
-  private boolean initialized;
+  private volatile MasterServices masterServices;
+  private volatile Table nsTable = null; // FindBugs: IS2_INCONSISTENT_SYNC TODO: Access is not synchronized
+  private volatile ZKNamespaceManager zkNamespaceManager;
+  private volatile boolean initialized;
 
   public static final String KEY_MAX_REGIONS = "hbase.namespace.quota.maxregions";
   public static final String KEY_MAX_TABLES = "hbase.namespace.quota.maxtables";
@@ -107,10 +108,13 @@ public class TableNamespaceManager implements Stoppable {
           throw new IOException("Timedout " + timeout + "ms waiting for namespace table to "
               + "be assigned and enabled: " + getTableState());
         }
-        Thread.sleep(100);
+        Thread.sleep(250);
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw (InterruptedIOException) new InterruptedIOException().initCause(e);
+    } finally {
+      IOUtils.closeQuietly(nsTable);
     }
   }
 
@@ -124,7 +128,7 @@ public class TableNamespaceManager implements Stoppable {
   /*
    * check whether a namespace has already existed.
    */
-  public boolean doesNamespaceExist(final String namespaceName) throws IOException {
+  public synchronized boolean doesNamespaceExist(final String namespaceName) throws IOException {
     if (nsTable == null) {
       throw new IOException(this.getClass().getName() + " isn't ready to serve");
     }
@@ -192,18 +196,14 @@ public class TableNamespaceManager implements Stoppable {
   public synchronized NavigableSet<NamespaceDescriptor> list() throws IOException {
     NavigableSet<NamespaceDescriptor> ret =
         Sets.newTreeSet(NamespaceDescriptor.NAMESPACE_DESCRIPTOR_COMPARATOR);
-    ResultScanner scanner =
-        getNamespaceTable().getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES);
-    try {
-      for(Result r : scanner) {
-        byte[] val = CellUtil.cloneValue(r.getColumnLatestCell(
-          HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES,
-          HTableDescriptor.NAMESPACE_COL_DESC_BYTES));
-        ret.add(ProtobufUtil.toNamespaceDescriptor(
-            HBaseProtos.NamespaceDescriptor.parseFrom(val)));
+    try (Table table = getNamespaceTable()){
+      try (ResultScanner scanner = table.getScanner(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES)) {
+        for (Result r : scanner) {
+          byte[] val = CellUtil.cloneValue(
+              r.getColumnLatestCell(HTableDescriptor.NAMESPACE_FAMILY_INFO_BYTES, HTableDescriptor.NAMESPACE_COL_DESC_BYTES));
+          ret.add(ProtobufUtil.toNamespaceDescriptor(HBaseProtos.NamespaceDescriptor.parseFrom(val)));
+        }
       }
-    } finally {
-      scanner.close();
     }
     return ret;
   }
@@ -238,7 +238,7 @@ public class TableNamespaceManager implements Stoppable {
    * An ugly utility to be removed when refactor TableNamespaceManager.
    * @throws TimeoutIOException
    */
-  private static void block(final MasterServices services, final long procId)
+  private void block(final MasterServices services, final long procId)
   throws TimeoutIOException {
     int timeoutInMillis = services.getConfiguration().
         getInt(ClusterSchema.HBASE_MASTER_CLUSTER_SCHEMA_OPERATION_TIMEOUT_KEY,
@@ -249,7 +249,11 @@ public class TableNamespaceManager implements Stoppable {
     while(EnvironmentEdgeManager.currentTime() < deadlineTs) {
       if (procedureExecutor.isFinished(procId)) return;
       // Sleep some
-      Threads.sleep(10);
+      try {
+        wait(250);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
     throw new TimeoutIOException("Procedure pid=" + procId + " is still running");
   }
@@ -378,7 +382,7 @@ public class TableNamespaceManager implements Stoppable {
   }
 
   @Override
-  public void stop(String why) {
+  public synchronized void stop(String why) {
     if (this.stopped) {
       return;
     }

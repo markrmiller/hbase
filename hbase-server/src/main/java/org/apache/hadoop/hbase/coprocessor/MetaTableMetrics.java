@@ -296,7 +296,7 @@ public class MetaTableMetrics implements RegionCoprocessor {
     for(String metric:metrics){
       registry.remove(metric);
     }
-   // IOUtils.closeQuietly(clientMetricsLossyCounting);
-   // IOUtils.closeQuietly(regionMetricsLossyCounting);
+    IOUtils.closeQuietly(clientMetricsLossyCounting);
+    IOUtils.closeQuietly(regionMetricsLossyCounting);
   }
 }
