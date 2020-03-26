@@ -83,7 +83,7 @@ public class FastPathBalancedQueueRpcExecutor extends BalancedQueueRpcExecutor {
     // UNFAIR synchronization.
     private Semaphore semaphore = new Semaphore(0);
     // The task we get when fast-pathing.
-    private CallRunner loadedCallRunner;
+    private volatile CallRunner loadedCallRunner;
 
     FastPathHandler(String name, double handlerFailureThreshhold, BlockingQueue<CallRunner> q,
         final AtomicInteger activeHandlerCount,

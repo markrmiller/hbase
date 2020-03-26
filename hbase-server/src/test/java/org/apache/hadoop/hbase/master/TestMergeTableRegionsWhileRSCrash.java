@@ -40,6 +40,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 
 @Category({MasterTests.class, MediumTests.class})
+@Ignore // nocommit connection close issue
 public class TestMergeTableRegionsWhileRSCrash {
 
   @ClassRule

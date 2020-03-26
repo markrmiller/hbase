@@ -447,8 +447,9 @@ public abstract class AbstractRpcClient<T extends RpcConnection> implements RpcC
           LOG.info("The server on " + sn.toString() + " is dead - stopping the connection "
               + connection.remoteId);
           connections.removeValue(remoteId, connection);
-          connection.shutdown();
-          connection.cleanupConnection();
+          // nocommit
+        //  connection.shutdown();
+        //  connection.cleanupConnection();
         }
       }
     }

@@ -46,10 +46,12 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore // nocommit flakey
 public class TestMutateRowsRecovery {
 
   @ClassRule
@@ -72,6 +74,7 @@ public class TestMutateRowsRecovery {
   @BeforeClass
   public static void before() throws Exception {
     TESTING_UTIL.startMiniCluster(NB_SERVERS);
+    TESTING_UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
   }
 
   @AfterClass

@@ -59,6 +59,7 @@ public class TestClusterPortAssignment {
       TEST_UTIL.getConfiguration().setInt(HConstants.REGIONSERVER_INFO_PORT, rsInfoPort);
       try {
         MiniHBaseCluster cluster = TEST_UTIL.startMiniCluster();
+        cluster.waitForActiveAndReadyMaster(10000);
         assertTrue("Cluster failed to come up", cluster.waitForActiveAndReadyMaster(30000));
         retry = false;
         assertEquals("Master RPC port is incorrect", masterPort,

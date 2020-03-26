@@ -23,6 +23,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.TableName;
@@ -82,7 +84,7 @@ public class TestMasterProcedureSchedulerConcurrency {
     assertEquals(opsCount.get(), queue.size());
 
     Thread[] threads = new Thread[NUM_PEERS * 2];
-    HashSet<String> concurrentPeers = new HashSet<>();
+    Set<String> concurrentPeers = ConcurrentHashMap.newKeySet();
     ArrayList<String> failures = new ArrayList<>();
     AtomicInteger concurrentCount = new AtomicInteger(0);
     for (int i = 0; i < threads.length; ++i) {

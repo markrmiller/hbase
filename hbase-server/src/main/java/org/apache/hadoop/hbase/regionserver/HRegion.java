@@ -456,7 +456,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
      *
      * @param onOff flip value for region r/o setting
      */
-    synchronized void setReadOnly(final boolean onOff) {
+    void setReadOnly(final boolean onOff) {
       this.writesEnabled = !onOff;
       this.readOnly = onOff;
     }
@@ -1452,9 +1452,7 @@ public class HRegion implements HeapSize, PropagatingConfigurationObserver, Regi
   }
 
   public boolean areWritesEnabled() {
-    synchronized(this.writestate) {
-      return this.writestate.writesEnabled;
-    }
+    return this.writestate.writesEnabled;
   }
 
   @VisibleForTesting

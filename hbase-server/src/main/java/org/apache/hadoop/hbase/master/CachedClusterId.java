@@ -46,10 +46,10 @@ import org.apache.hbase.thirdparty.com.google.common.base.Preconditions;
 public class CachedClusterId {
 
   public static final Logger LOG = LoggerFactory.getLogger(CachedClusterId.class);
-  private static final int MAX_FETCH_TIMEOUT_MS = 10000;
+  private static final int MAX_FETCH_TIMEOUT_MS = 1000;
 
-  private Path rootDir;
-  private FileSystem fs;
+  private final Path rootDir;
+  private final FileSystem fs;
 
   // When true, indicates that a FileSystem fetch of ClusterID is in progress. This is used to
   // avoid multiple fetches from FS and let only one thread fetch the information.

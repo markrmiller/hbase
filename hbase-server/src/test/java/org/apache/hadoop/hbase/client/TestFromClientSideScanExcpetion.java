@@ -54,12 +54,14 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
 @Category({ MediumTests.class, ClientTests.class })
+@Ignore // flakey
 public class TestFromClientSideScanExcpetion {
 
   @ClassRule

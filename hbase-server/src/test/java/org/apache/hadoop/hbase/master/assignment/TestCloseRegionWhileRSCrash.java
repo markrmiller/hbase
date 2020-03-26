@@ -24,6 +24,8 @@ import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.ProcedureTestUtil;
 import org.apache.hadoop.hbase.ServerName;
 import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.client.Table;
@@ -44,6 +46,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -52,6 +55,7 @@ import org.junit.experimental.categories.Category;
  * CPUs.
  */
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // flakey
 public class TestCloseRegionWhileRSCrash {
 
   @ClassRule
@@ -173,8 +177,8 @@ public class TestCloseRegionWhileRSCrash {
     UTIL.waitFor(30000,
       () -> procExec.getProcedures().stream().anyMatch(p -> p instanceof ServerCrashProcedure));
     Thread t = new Thread(() -> {
-      try {
-        UTIL.getAdmin().move(region.getEncodedNameAsBytes(), dstRs.getServerName());
+      try (Connection connection = ConnectionFactory.createConnection(UTIL.getConfiguration())) {
+        connection.getAdmin().move(region.getEncodedNameAsBytes(), dstRs.getServerName());
       } catch (IOException e) {
       }
     });
@@ -189,8 +193,10 @@ public class TestCloseRegionWhileRSCrash {
     master.getConnection().close();
     RESUME.countDown();
     UTIL.waitFor(30000, () -> !master.isAlive());
+    UTIL.getMiniHBaseCluster().waitForMasterToStop(master.getServerName(), 15000);
     // here we start a new master
     UTIL.getMiniHBaseCluster().startMaster();
+    UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
     t.join();
     // Make sure that the region is online, it may not on the original target server, as we will set
     // forceNewPlan to true if there is a server crash

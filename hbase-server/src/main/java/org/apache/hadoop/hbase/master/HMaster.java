@@ -2880,11 +2880,13 @@ public class HMaster extends HRegionServer implements MasterServices {
       }
       try {
         this.clusterSchemaService.stopAsync();
-      } catch (Exception e) {
-        e.printStackTrace();
+      } catch (NullPointerException e) {
+        // okay
       }
       stopProcedureExecutor();
-      if (this.assignmentManager != null) this.assignmentManager.stop();
+      if (this.assignmentManager != null) {
+        this.assignmentManager.stop();
+      }
 
     }
   }

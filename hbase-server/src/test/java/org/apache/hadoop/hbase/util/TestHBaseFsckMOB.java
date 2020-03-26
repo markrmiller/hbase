@@ -85,9 +85,21 @@ public class TestHBaseFsckMOB extends BaseTestHBaseFsck {
 
   @AfterClass
   public static void tearDownAfterClass() throws Exception {
-    tableExecutorService.shutdown();
-    hbfsckExecutorService.shutdown();
-    admin.close();
+    try {
+      tableExecutorService.shutdown();
+    } catch (NullPointerException e) {
+      // okay
+    }
+    try {
+      hbfsckExecutorService.shutdown();
+    } catch (NullPointerException e) {
+      // okay
+    }
+    try {
+      admin.close();
+    } catch (NullPointerException e) {
+      // okay
+    }
     TEST_UTIL.shutdownMiniCluster();
   }
 

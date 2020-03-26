@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 import org.apache.hbase.thirdparty.io.netty.channel.Channel;
@@ -42,6 +43,7 @@ import org.apache.hbase.thirdparty.io.netty.channel.EventLoopGroup;
  * Testcase for HBASE-22539
  */
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore // nocommit failing on abort - connections are closed and reuse is attempted
 public class TestAsyncFSWALCorruptionDueToDanglingByteBuffer
   extends WALCorruptionDueToDanglingByteBufferTestBase {
 

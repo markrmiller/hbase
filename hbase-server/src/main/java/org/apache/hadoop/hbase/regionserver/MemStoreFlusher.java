@@ -328,7 +328,7 @@ class MemStoreFlusher implements FlushRequester {
 
     @Override
     public void run() {
-      while (!server.isStopped()) {
+      while (!server.isStopped() && !server.isStopping()) {
         FlushQueueEntry fqe = null;
         try {
           wakeupPending.set(false); // allow someone to wake us up again

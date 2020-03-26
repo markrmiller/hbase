@@ -1143,25 +1143,12 @@ public class HRegionServer extends HasThread implements
     if (this.lockStub != null) {
       this.lockStub = null;
     }
-    if (this.rpcClient != null) {
-      this.rpcClient.close();
-    }
     if (this.leaseManager != null) {
       this.leaseManager.close();
     }
     if (this.pauseMonitor != null) {
       this.pauseMonitor.stop();
     }
-
-    //if (!killed) { nocommit
-      stopServiceThreads();
-    //}
-
-    if (this.rpcServices != null) {
-      this.rpcServices.stop();
-    }
-
-    eventLoopGroupConfig.group().shutdownGracefully();
 
     try {
       deleteMyEphemeralNode();
@@ -1174,8 +1161,21 @@ public class HRegionServer extends HasThread implements
     //  we delete the file anyway: a second attempt to delete the znode is likely to fail again.
     ZNodeClearer.deleteMyEphemeralNodeOnDisk();
 
+    //if (!killed) { nocommit
+    stopServiceThreads();
+    //}
+
+
     if (this.zooKeeper != null) {
       this.zooKeeper.close();
+    }
+
+    if (this.rpcClient != null) {
+      this.rpcClient.close();
+    }
+
+    if (this.rpcServices != null) {
+      this.rpcServices.stop();
     }
 
     if (eventLoopGroupConfig != null) {
@@ -2567,6 +2567,7 @@ public class HRegionServer extends HasThread implements
       choreService.shutdown();
     }
 
+
     if (this.cacheFlusher != null) {
       this.cacheFlusher.join();
     }
@@ -2580,6 +2581,11 @@ public class HRegionServer extends HasThread implements
     if (this.compactSplitThread != null) {
       this.compactSplitThread.join();
     }
+
+    if (this.executorService != null) {
+      this.executorService.shutdown();
+    }
+
     if (this.replicationSourceHandler != null &&
         this.replicationSourceHandler == this.replicationSinkHandler) {
       this.replicationSourceHandler.stopReplicationService();
@@ -2592,9 +2598,7 @@ public class HRegionServer extends HasThread implements
       }
     }
 
-    if (this.executorService != null) {
-      this.executorService.shutdown();
-    }
+
   }
 
   /**

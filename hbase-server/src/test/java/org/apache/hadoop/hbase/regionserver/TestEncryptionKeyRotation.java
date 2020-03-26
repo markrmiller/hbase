@@ -52,6 +52,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -60,6 +61,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({RegionServerTests.class, MediumTests.class})
+@Ignore // nocommit flakey
 public class TestEncryptionKeyRotation {
 
   @ClassRule
@@ -95,6 +97,7 @@ public class TestEncryptionKeyRotation {
 
     // Start the minicluster
     TEST_UTIL.startMiniCluster(1);
+    TEST_UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
   }
 
   @AfterClass
@@ -186,7 +189,7 @@ public class TestEncryptionKeyRotation {
     conf.set(HConstants.CRYPTO_MASTERKEY_ALTERNATE_NAME_CONF_KEY, "hbase");
 
     // Start the cluster back up
-    TEST_UTIL.startMiniHBaseCluster();
+    TEST_UTIL.restartHBaseCluster(1);
     // Verify the table can still be loaded
     TEST_UTIL.waitTableAvailable(htd.getTableName(), 5000);
     // Double check that the store file keys can be unwrapped

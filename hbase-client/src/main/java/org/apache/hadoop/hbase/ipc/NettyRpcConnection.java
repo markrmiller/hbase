@@ -22,6 +22,7 @@ import static org.apache.hadoop.hbase.ipc.CallEvent.Type.TIMEOUT;
 import static org.apache.hadoop.hbase.ipc.IPCUtil.setCancelled;
 import static org.apache.hadoop.hbase.ipc.IPCUtil.toIOE;
 
+import org.apache.hadoop.hbase.ObjectReleaseTracker;
 import org.apache.hbase.thirdparty.io.netty.handler.timeout.ReadTimeoutHandler;
 import org.apache.hadoop.hbase.security.NettyHBaseRpcConnectionHeaderHandler;
 import org.apache.hbase.thirdparty.com.google.protobuf.RpcCallback;
@@ -77,17 +78,18 @@ class NettyRpcConnection extends RpcConnection {
 
   private final NettyRpcClient rpcClient;
 
-  private ByteBuf connectionHeaderPreamble;
+  private final ByteBuf connectionHeaderPreamble;
 
-  private ByteBuf connectionHeaderWithLength;
+  private final ByteBuf connectionHeaderWithLength;
 
   @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "IS2_INCONSISTENT_SYNC",
       justification = "connect is also under lock as notifyOnCancel will call our action directly")
-  private Channel channel;
+  private volatile Channel channel;
 
   NettyRpcConnection(NettyRpcClient rpcClient, ConnectionId remoteId) throws IOException {
     super(rpcClient.conf, AbstractRpcClient.WHEEL_TIMER, remoteId, rpcClient.clusterId,
         rpcClient.userProvider.isHBaseSecurityEnabled(), rpcClient.codec, rpcClient.compressor);
+    assert ObjectReleaseTracker.track(this);
     this.rpcClient = rpcClient;
     byte[] connectionHeaderPreamble = getConnectionHeaderPreamble();
     this.connectionHeaderPreamble =
@@ -112,9 +114,11 @@ class NettyRpcConnection extends RpcConnection {
 
   private void shutdown0() {
     if (channel != null) {
+      System.out.println("CLOSE CHANNEL!");
       channel.close();
       channel = null;
     }
+    assert ObjectReleaseTracker.release(this);
   }
 
   @Override

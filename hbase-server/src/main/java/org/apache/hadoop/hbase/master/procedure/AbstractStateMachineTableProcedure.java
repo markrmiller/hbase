@@ -49,7 +49,7 @@ public abstract class AbstractStateMachineTableProcedure<TState>
   // used for compatibility with old clients
   private final ProcedurePrepareLatch syncLatch;
 
-  private User user;
+  private volatile User user;
 
   protected AbstractStateMachineTableProcedure() {
     // Required by the Procedure framework to create the procedure on replay

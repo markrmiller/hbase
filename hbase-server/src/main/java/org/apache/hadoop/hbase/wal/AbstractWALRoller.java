@@ -104,7 +104,7 @@ public abstract class AbstractWALRoller<T extends Abortable> extends HasThread
     super(name);
     this.abortable = abortable;
     this.rollPeriod = conf.getLong(WAL_ROLL_PERIOD_KEY, 3600000);
-    this.threadWakeFrequency = conf.getInt(HConstants.THREAD_WAKE_FREQUENCY, 10 * 1000);
+    this.threadWakeFrequency = conf.getInt(HConstants.THREAD_WAKE_FREQUENCY, 5 * 1000);
     this.checkLowReplicationInterval =
       conf.getLong("hbase.regionserver.hlog.check.lowreplication.interval", 30 * 1000);
   }

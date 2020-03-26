@@ -19,9 +19,12 @@ package org.apache.hadoop.hbase.replication;
 
 import java.io.IOException;
 import org.apache.hadoop.hbase.HBaseClassTestRule;
+import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptorBuilder;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
@@ -32,10 +35,12 @@ import org.apache.hadoop.hbase.util.CommonFSUtils.StreamLacksCapabilityException
 import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ ReplicationTests.class, MediumTests.class })
+@Ignore // flakey
 public class TestSerialReplicationFailover extends SerialReplicationTestBase {
 
   @ClassRule
@@ -47,6 +52,7 @@ public class TestSerialReplicationFailover extends SerialReplicationTestBase {
     setupWALWriter();
     // add in disable state, so later when enabling it all sources will start push together.
     addPeer(false);
+    UTIL.waitUntilNoRegionsInTransition();
   }
 
   @Test
@@ -65,9 +71,13 @@ public class TestSerialReplicationFailover extends SerialReplicationTestBase {
       .filter(t -> !t.getRegionServer().getRegions(tableName).isEmpty()).findFirst().get();
     thread.getRegionServer().abort("for testing");
     thread.join();
-    try (Table table = UTIL.getConnection().getTable(tableName)) {
-      for (int i = 100; i < 200; i++) {
-        table.put(new Put(Bytes.toBytes(i)).addColumn(CF, CQ, Bytes.toBytes(i)));
+
+    try (Connection connection =
+        ConnectionFactory.createConnection(UTIL.getConfiguration())) {
+      try (Table table = connection.getTable(tableName)) {
+        for (int i = 100; i < 200; i++) {
+          table.put(new Put(Bytes.toBytes(i)).addColumn(CF, CQ, Bytes.toBytes(i)));
+        }
       }
     }
     enablePeerAndWaitUntilReplicationDone(200);

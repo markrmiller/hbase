@@ -90,6 +90,8 @@ public class TestReplicationBase {
   protected static final byte[] row = Bytes.toBytes("row");
   protected static final byte[] noRepfamName = Bytes.toBytes("norep");
   protected static final String PEER_ID2 = "2";
+  private static Connection connection1;
+  private static Connection connection2;
 
   protected boolean isSerialPeer() {
     return false;
@@ -209,10 +211,13 @@ public class TestReplicationBase {
     IOUtils.closeQuietly(hbaseAdmin, htable1);
     UTIL1.shutdownMiniHBaseCluster();
     UTIL1.restartHBaseCluster(numSlaves);
+    UTIL1.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
+    hbaseAdmin.close();
     // Invalidate the cached connection state.
     CONF1 = UTIL1.getConfiguration();
     hbaseAdmin = UTIL1.getAdmin();
-    Connection connection1 = UTIL1.getConnection();
+    connection1.close();
+    connection1 = UTIL1.getConnection();
     htable1 = connection1.getTable(tableName);
   }
 
@@ -238,6 +243,9 @@ public class TestReplicationBase {
     // as a component in deciding maximum number of parallel batches to send to the peer cluster.
     UTIL2.startMiniCluster(NUM_SLAVES2);
 
+    UTIL1.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
+    UTIL2.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
+
     admin = new ReplicationAdmin(CONF1);
     hbaseAdmin = ConnectionFactory.createConnection(CONF1).getAdmin();
 
@@ -246,8 +254,8 @@ public class TestReplicationBase {
             .setScope(HConstants.REPLICATION_SCOPE_GLOBAL).build())
         .setColumnFamily(ColumnFamilyDescriptorBuilder.of(noRepfamName)).build();
 
-    Connection connection1 = ConnectionFactory.createConnection(CONF1);
-    Connection connection2 = ConnectionFactory.createConnection(CONF2);
+    connection1 = ConnectionFactory.createConnection(CONF1);
+    connection2 = ConnectionFactory.createConnection(CONF2);
     try (Admin admin1 = connection1.getAdmin()) {
       admin1.createTable(table, HBaseTestingUtility.KEYS_FOR_HBA_CREATE_TABLE);
     }
@@ -256,6 +264,8 @@ public class TestReplicationBase {
     }
     UTIL1.waitUntilAllRegionsAssigned(tableName);
     UTIL2.waitUntilAllRegionsAssigned(tableName);
+    UTIL1.waitTableAvailable(tableName);
+    UTIL2.waitTableAvailable(tableName);
     htable1 = connection1.getTable(tableName);
     htable2 = connection2.getTable(tableName);
   }
@@ -351,6 +361,10 @@ public class TestReplicationBase {
     if (admin != null) {
       admin.close();
     }
+
+    connection1.close();
+    connection2.close();
+
     UTIL2.shutdownMiniCluster();
     UTIL1.shutdownMiniCluster();
   }

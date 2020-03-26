@@ -54,7 +54,7 @@ public class TestClusterId {
   private final HBaseTestingUtility TEST_UTIL =
       new HBaseTestingUtility();
 
-  private JVMClusterUtil.RegionServerThread rst;
+  private volatile JVMClusterUtil.RegionServerThread rst;
 
   @Before
   public void setUp() throws Exception {
@@ -92,6 +92,9 @@ public class TestClusterId {
     String clusterId = ZKClusterId.readClusterIdZNode(TEST_UTIL.getZooKeeperWatcher());
     assertNotNull(clusterId);
     assertEquals(clusterId, rst.getRegionServer().getClusterId());
+
+    rst.getRegionServer().stop("");
+
   }
 
   @Test

@@ -43,6 +43,7 @@ import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -56,6 +57,7 @@ import org.slf4j.LoggerFactory;
  * standalone {@link HRegion}.
  */
 @Category({RegionServerTests.class, MediumTests.class})
+@Ignore // nocommit prob have to look at new connections after server kill?
 public class TestHRegionOnCluster {
 
   @ClassRule

@@ -59,9 +59,9 @@ public class SimpleLoadBalancer extends BaseLoadBalancer {
   private static final Logger LOG = LoggerFactory.getLogger(SimpleLoadBalancer.class);
   private static final Random RANDOM = new Random(System.currentTimeMillis());
 
-  private RegionInfoComparator riComparator = new RegionInfoComparator();
-  private RegionPlan.RegionPlanComparator rpComparator = new RegionPlan.RegionPlanComparator();
-  private float avgLoadOverall;
+  private final RegionInfoComparator riComparator = new RegionInfoComparator();
+  private final RegionPlan.RegionPlanComparator rpComparator = new RegionPlan.RegionPlanComparator();
+  private volatile float avgLoadOverall;
   private List<ServerAndLoad> serverLoadList;
 
   /**

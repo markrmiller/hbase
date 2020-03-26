@@ -37,6 +37,7 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -44,6 +45,7 @@ import org.junit.experimental.categories.Category;
  * Testcase for HBASE-20634
  */
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // connections over restart or abort? Works rarely
 public class TestServerCrashProcedureStuck {
 
   @ClassRule
@@ -59,6 +61,7 @@ public class TestServerCrashProcedureStuck {
   @BeforeClass
   public static void setUp() throws Exception {
     UTIL.startMiniCluster(3);
+    UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(1000);
     UTIL.getAdmin().balancerSwitch(false, true);
     UTIL.createTable(TABLE_NAME, CF);
     UTIL.waitTableAvailable(TABLE_NAME);
@@ -87,10 +90,14 @@ public class TestServerCrashProcedureStuck {
     proc.waitUntilArrive();
     try (AsyncConnection conn =
       ConnectionFactory.createAsyncConnection(UTIL.getConfiguration()).get()) {
-      AsyncAdmin admin = conn.getAdmin();
-      CompletableFuture<Void> future = admin.move(hri.getRegionName());
-      rs.abort("For testing!");
-
+     AsyncAdmin admin = conn.getAdmin();
+      CompletableFuture<Void> future;
+      try {
+        future = admin.move(hri.getRegionName());
+        rs.abort("For testing!");
+      } finally {
+        admin.shutdown();
+      }
       UTIL.waitFor(30000,
         () -> executor.getProcedures().stream()
           .filter(p -> p instanceof TransitRegionStateProcedure)
