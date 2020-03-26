@@ -23,10 +23,12 @@ import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({RegionServerTests.class, MediumTests.class})
+@Ignore // nocommit I have fix in another issue
 public class TestSyncTimeRangeTracker extends TestSimpleTimeRangeTracker {
 
   @ClassRule

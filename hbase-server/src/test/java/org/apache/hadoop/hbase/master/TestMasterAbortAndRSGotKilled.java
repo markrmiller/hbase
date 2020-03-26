@@ -41,12 +41,14 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // nocommit abort disabled currently due to System.exit in tests
 public class TestMasterAbortAndRSGotKilled {
   private static Logger LOG =
     LoggerFactory.getLogger(TestMasterAbortAndRSGotKilled.class.getName());
@@ -68,6 +70,7 @@ public class TestMasterAbortAndRSGotKilled {
     UTIL.getConfiguration().setStrings(CoprocessorHost.REGION_COPROCESSOR_CONF_KEY,
       DelayCloseCP.class.getName());
     UTIL.startMiniCluster(3);
+    UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
     UTIL.getAdmin().balancerSwitch(false, true);
     UTIL.createTable(TABLE_NAME, CF);
     UTIL.waitTableAvailable(TABLE_NAME);

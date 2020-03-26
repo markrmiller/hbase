@@ -83,15 +83,15 @@ public class MasterQuotaManager implements RegionStateListener {
       new HashMap<>());
 
   private final MasterServices masterServices;
-  private NamedLock<String> namespaceLocks;
-  private NamedLock<TableName> tableLocks;
-  private NamedLock<String> userLocks;
-  private NamedLock<String> regionServerLocks;
-  private boolean initialized = false;
-  private NamespaceAuditor namespaceQuotaManager;
-  private ConcurrentHashMap<RegionInfo, SizeSnapshotWithTimestamp> regionSizes;
+  private volatile NamedLock<String> namespaceLocks;
+  private volatile NamedLock<TableName> tableLocks;
+  private volatile NamedLock<String> userLocks;
+  private volatile NamedLock<String> regionServerLocks;
+  private volatile boolean initialized = false;
+  private volatile NamespaceAuditor namespaceQuotaManager;
+  private volatile ConcurrentHashMap<RegionInfo, SizeSnapshotWithTimestamp> regionSizes;
   // Storage for quota rpc throttle
-  private RpcThrottleStorage rpcThrottleStorage;
+  private volatile RpcThrottleStorage rpcThrottleStorage;
 
   public MasterQuotaManager(final MasterServices masterServices) {
     this.masterServices = masterServices;
@@ -127,7 +127,11 @@ public class MasterQuotaManager implements RegionStateListener {
   }
 
   public void stop() {
-    namespaceQuotaManager.stop();
+    try {
+      namespaceQuotaManager.stop();
+    } catch (NullPointerException e) {
+      // okay
+    }
   }
 
   public boolean isQuotaInitialized() {

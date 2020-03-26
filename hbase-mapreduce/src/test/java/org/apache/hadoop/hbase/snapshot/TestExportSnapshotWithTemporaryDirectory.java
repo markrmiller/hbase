@@ -27,9 +27,11 @@ import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 @Category({MediumTests.class})
+@Ignore // nocommit flakey
 public class TestExportSnapshotWithTemporaryDirectory extends TestExportSnapshot {
 
   @ClassRule

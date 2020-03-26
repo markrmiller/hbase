@@ -65,7 +65,7 @@ public class TestMultiRespectsLimits {
   private static final MetricsAssertHelper METRICS_ASSERT =
       CompatibilityFactory.getInstance(MetricsAssertHelper.class);
   private final static byte[] FAMILY = Bytes.toBytes("D");
-  public static final int MAX_SIZE = 500;
+  public static final int MAX_SIZE = 10;
 
   @Rule
   public TestName name = new TestName();
@@ -78,6 +78,7 @@ public class TestMultiRespectsLimits {
 
     // Only start on regionserver so that all regions are on the same server.
     TEST_UTIL.startMiniCluster(1);
+    TEST_UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
   }
 
   @AfterClass
@@ -89,6 +90,7 @@ public class TestMultiRespectsLimits {
   public void testMultiLimits() throws Exception {
     final TableName tableName = TableName.valueOf(name.getMethodName());
     Table t = TEST_UTIL.createTable(tableName, FAMILY);
+    TEST_UTIL.waitTableAvailable(tableName);
     TEST_UTIL.loadTable(t, FAMILY, false);
 
     // Split the table to make sure that the chunking happens accross regions.
@@ -156,7 +158,7 @@ public class TestMultiRespectsLimits {
     // Set the value size so that one result will be less than the MAX_SIE
     // however the block being reference will be larger than MAX_SIZE.
     // This should cause the regionserver to try and send a result immediately.
-    byte[] value = new byte[MAX_SIZE - 100];
+    byte[] value = new byte[MAX_SIZE - 4];
     ThreadLocalRandom.current().nextBytes(value);
 
     for (byte[] col:cols) {

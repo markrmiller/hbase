@@ -68,7 +68,7 @@ public class Sleeper {
   }
 
   public void sleep(long sleepTime) {
-    if (this.stopper.isStopping()) {
+    if (this.stopper.isStopping() || this.stopper.isStopped()) {
       return;
     }
     long now = System.currentTimeMillis();
@@ -93,7 +93,7 @@ public class Sleeper {
       } catch(InterruptedException iex) {
         // We we interrupted because we're meant to stop?  If not, just
         // continue ignoring the interruption
-        if (this.stopper.isStopping()) {
+        if (this.stopper.isStopping() || this.stopper.isStopped()) {
           Thread.currentThread().interrupt();
           return;
         }

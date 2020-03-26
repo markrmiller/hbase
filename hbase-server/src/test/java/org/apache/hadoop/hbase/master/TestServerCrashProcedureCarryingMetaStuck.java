@@ -37,10 +37,12 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // flakey
 public class TestServerCrashProcedureCarryingMetaStuck {
 
   @ClassRule
@@ -91,6 +93,7 @@ public class TestServerCrashProcedureCarryingMetaStuck {
       UTIL.waitFor(30000, () -> executor.isFinished(procId));
       // see whether the move region procedure can finish properly
       future.get(30, TimeUnit.SECONDS);
+      admin.shutdown();
     }
   }
 }

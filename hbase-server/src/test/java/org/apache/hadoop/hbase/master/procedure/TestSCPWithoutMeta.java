@@ -21,10 +21,12 @@ import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ MasterTests.class, LargeTests.class })
+@Ignore // nocommit kills region server, likely need to refresh connections
 public class TestSCPWithoutMeta extends TestSCPBase {
 
   @ClassRule

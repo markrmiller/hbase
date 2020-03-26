@@ -217,7 +217,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
   /**
    * Shared cluster connection.
    */
-  private Connection connection;
+  private volatile Connection connection;
 
   /** Filesystem URI used for map-reduce mini-cluster setup */
   private static String FS_URI;
@@ -1282,7 +1282,10 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
         this.connection.close();
         this.connection = null;
     }
-
+    if (this.hbaseCluster != null) {
+      this.hbaseCluster.shutdown();
+      this.hbaseCluster.waitUntilShutDown();
+    }
     this.hbaseCluster =
         new MiniHBaseCluster(this.conf, option.getNumMasters(), option.getNumAlwaysStandByMasters(),
             option.getNumRegionServers(), option.getRsPorts(), option.getMasterClass(),
@@ -1298,6 +1301,8 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
       s.close();
       t.close();
     }
+
+    this.hbaseCluster.waitForActiveAndReadyMaster(10000);
   }
 
   /**
@@ -3179,7 +3184,7 @@ public class HBaseTestingUtility extends HBaseZKTestingUtility {
     return hbaseAdmin;
   }
 
-  private HBaseAdmin hbaseAdmin = null;
+  private volatile HBaseAdmin hbaseAdmin = null;
 
   /**
    * Returns an {@link Hbck} instance. Needs be closed when done.

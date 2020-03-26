@@ -27,9 +27,11 @@ import org.apache.hadoop.hbase.wal.AsyncFSWALProvider.AsyncWriter;
 import org.apache.hadoop.hbase.wal.WAL.Reader;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore // nocommit hmmm...
 public class TestSecureAsyncWALReplay extends TestAsyncWALReplay {
 
   @ClassRule

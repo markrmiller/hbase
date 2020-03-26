@@ -21,6 +21,7 @@ import org.apache.hbase.thirdparty.com.google.protobuf.RpcCallback;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.hbase.CellScannable;
@@ -41,22 +42,22 @@ public class HBaseRpcControllerImpl implements HBaseRpcController {
   /**
    * The time, in ms before the call should expire.
    */
-  private Integer callTimeout;
+  private volatile Integer callTimeout;
 
-  private boolean done = false;
+  private volatile boolean done = false;
 
-  private boolean cancelled = false;
+  private volatile boolean cancelled = false;
 
-  private final List<RpcCallback<Object>> cancellationCbs = new ArrayList<>();
+  private final List<RpcCallback<Object>> cancellationCbs = Collections.synchronizedList(new ArrayList<>());
 
-  private IOException exception;
+  private volatile IOException exception;
 
   /**
    * Priority to set on this request. Set it here in controller so available composing the request.
    * This is the ordained way of setting priorities going forward. We will be undoing the old
    * annotation-based mechanism.
    */
-  private int priority = HConstants.PRIORITY_UNSET;
+  private volatile int priority = HConstants.PRIORITY_UNSET;
 
   /**
    * They are optionally set on construction, cleared after we make the call, and then optionally
@@ -64,7 +65,7 @@ public class HBaseRpcControllerImpl implements HBaseRpcController {
    * sometimes the scanner is backed by a List of Cells and other times, it is backed by an encoded
    * block that implements CellScanner.
    */
-  private CellScanner cellScanner;
+  private volatile CellScanner cellScanner;
 
   public HBaseRpcControllerImpl() {
     this((CellScanner) null);
@@ -113,7 +114,7 @@ public class HBaseRpcControllerImpl implements HBaseRpcController {
   @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "IS2_INCONSISTENT_SYNC",
       justification = "The only possible race method is startCancel")
   @Override
-  public void reset() {
+  public synchronized void reset() {
     priority = 0;
     cellScanner = null;
     exception = null;
@@ -122,11 +123,9 @@ public class HBaseRpcControllerImpl implements HBaseRpcController {
     // and we could cancel the operation from outside which means there could be a race between
     // reset and startCancel. Although I think the race should be handled by the callable since the
     // reset may clear the cancel state...
-    synchronized (this) {
-      done = false;
-      cancelled = false;
-      cancellationCbs.clear();
-    }
+    done = false;
+    cancelled = false;
+    cancellationCbs.clear();
   }
 
   @Override
@@ -224,7 +223,9 @@ public class HBaseRpcControllerImpl implements HBaseRpcController {
       }
       done = true;
       cancelled = true;
-      cbs = new ArrayList<>(cancellationCbs);
+      synchronized (cancellationCbs) {
+        cbs = new ArrayList<>(cancellationCbs);
+      }
     }
     for (RpcCallback<?> cb : cbs) {
       cb.run(null);

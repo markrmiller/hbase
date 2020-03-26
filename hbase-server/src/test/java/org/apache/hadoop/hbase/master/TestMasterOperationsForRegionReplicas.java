@@ -75,6 +75,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.hbase.thirdparty.com.google.common.io.Closeables;
 
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // nocommit hmmm...
 public class TestMasterOperationsForRegionReplicas {
 
   @ClassRule

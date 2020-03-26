@@ -38,7 +38,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.HBaseProtos;
 @InterfaceAudience.Private
 public abstract class AbstractStateMachineRegionProcedure<TState>
     extends AbstractStateMachineTableProcedure<TState> {
-  private RegionInfo hri;
+  private volatile RegionInfo hri;
 
   protected AbstractStateMachineRegionProcedure(MasterProcedureEnv env, RegionInfo hri) {
     super(env);

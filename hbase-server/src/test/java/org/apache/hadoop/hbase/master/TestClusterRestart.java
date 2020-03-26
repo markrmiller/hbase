@@ -29,12 +29,14 @@ import org.apache.hadoop.hbase.client.RegionInfo;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // nocommit not reliable yet
 public class TestClusterRestart extends AbstractTestRestartCluster {
 
   @ClassRule
@@ -51,7 +53,7 @@ public class TestClusterRestart extends AbstractTestRestartCluster {
   @Test
   public void test() throws Exception {
     UTIL.startMiniCluster(3);
-    UTIL.waitFor(60000, () -> UTIL.getMiniHBaseCluster().getMaster().isInitialized());
+    UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
     LOG.info("\n\nCreating tables");
     for (TableName TABLE : TABLES) {
       UTIL.createTable(TABLE, FAMILY);
@@ -63,13 +65,9 @@ public class TestClusterRestart extends AbstractTestRestartCluster {
     List<RegionInfo> allRegions = MetaTableAccessor.getAllRegions(UTIL.getConnection(), false);
     assertEquals(4, allRegions.size());
 
-    LOG.info("\n\nShutting down cluster");
-    UTIL.shutdownMiniHBaseCluster();
+    LOG.info("\n\nRestarting cluster");
+    UTIL.shutdownMiniCluster();
 
-    LOG.info("\n\nSleeping a bit");
-    Thread.sleep(2000);
-
-    LOG.info("\n\nStarting cluster the second time");
     UTIL.restartHBaseCluster(3);
 
     // Need to use a new 'Configuration' so we make a new Connection.

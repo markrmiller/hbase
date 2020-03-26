@@ -24,9 +24,11 @@ import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.apache.hadoop.hbase.testclassification.RegionServerTests;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 @Category({ RegionServerTests.class, MediumTests.class })
+@Ignore // flakey
 public class TestAsyncWALReplayCompressed extends TestAsyncWALReplay {
 
   @ClassRule

@@ -121,6 +121,7 @@ public class SerialReplicationTestBase {
     UTIL.getConfiguration().setLong("replication.sleep.before.failover", 1000);
     UTIL.getConfiguration().setLong("hbase.serial.replication.waiting.ms", 100);
     UTIL.startMiniCluster(3);
+    UTIL.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
     // disable balancer
     UTIL.getAdmin().balancerSwitch(false, true);
     LOG_DIR = UTIL.getDataTestDirOnTestFS("replicated");

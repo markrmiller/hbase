@@ -71,7 +71,7 @@ public class TestClientClusterStatus {
     UTIL.startMiniCluster(option);
     CLUSTER = UTIL.getHBaseCluster();
     CLUSTER.waitForActiveAndReadyMaster();
-    ADMIN = UTIL.getAdmin();
+
     // Kill one region server
     List<RegionServerThread> rsts = CLUSTER.getLiveRegionServerThreads();
     RegionServerThread rst = rsts.get(rsts.size() - 1);
@@ -80,6 +80,8 @@ public class TestClientClusterStatus {
     while (rst.isAlive()) {
       Thread.sleep(500);
     }
+
+    ADMIN = UTIL.getAdmin();
   }
 
   @Test

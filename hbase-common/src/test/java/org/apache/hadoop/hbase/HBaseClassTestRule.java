@@ -176,7 +176,7 @@ public final class HBaseClassTestRule implements TestRule {
       Sets.<Class<?>> newHashSet(SmallTests.class, MediumTests.class, LargeTests.class));
 
   // Each unit test has this timeout.
-  private static long PER_UNIT_TEST_TIMEOUT_MINS = 13;
+  private static long PER_UNIT_TEST_TIMEOUT_MINS = 3;
 
   private final Class<?> clazz;
 

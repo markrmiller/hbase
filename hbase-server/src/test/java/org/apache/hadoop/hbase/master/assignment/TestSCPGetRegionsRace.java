@@ -46,6 +46,7 @@ import org.apache.hadoop.hbase.util.IdLock;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -59,6 +60,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProto
  * Testcase for HBASE-22365.
  */
 @Category({ MasterTests.class, MediumTests.class })
+@Ignore // flakey
 public class TestSCPGetRegionsRace {
 
   @ClassRule

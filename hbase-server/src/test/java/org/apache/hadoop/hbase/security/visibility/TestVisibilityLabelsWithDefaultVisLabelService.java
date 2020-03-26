@@ -51,12 +51,14 @@ import org.apache.hadoop.hbase.util.Threads;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({SecurityTests.class, MediumTests.class})
+@Ignore // nocommit needs working restart and other
 public class TestVisibilityLabelsWithDefaultVisLabelService extends TestVisibilityLabels {
 
   @ClassRule

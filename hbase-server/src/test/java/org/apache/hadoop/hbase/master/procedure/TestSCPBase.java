@@ -58,6 +58,7 @@ public class TestSCPBase {
 
   protected void startMiniCluster() throws Exception {
     this.util.startMiniCluster(RS_COUNT);
+    this.util.getMiniHBaseCluster().waitForActiveAndReadyMaster(10000);
   }
 
   @After
