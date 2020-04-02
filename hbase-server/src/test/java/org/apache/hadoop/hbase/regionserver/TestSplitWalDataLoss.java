@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Matchers;
@@ -62,6 +63,7 @@ import org.slf4j.LoggerFactory;
  * Testcase for https://issues.apache.org/jira/browse/HBASE-13811
  */
 @Category({ LargeTests.class })
+@Ignore // nocommit flakey
 public class TestSplitWalDataLoss {
 
   @ClassRule

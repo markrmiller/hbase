@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.Pair;
 import org.apache.hadoop.hbase.util.Threads;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -64,6 +65,7 @@ import org.slf4j.LoggerFactory;
  * on the server-to-process rather than consult Master in-memory-state.
  */
 @Category({ MasterTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestHBCKSCP extends TestSCPBase {
   private static final Logger LOG = LoggerFactory.getLogger(TestHBCKSCP.class);
 

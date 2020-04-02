@@ -44,10 +44,12 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ RegionServerTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestClusterScopeQuotaThrottle {
 
   @ClassRule

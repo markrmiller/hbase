@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.apache.hadoop.hbase.util.Threads;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -357,6 +358,7 @@ public class TestAsyncRegionAdminApi extends TestAsyncAdminBase {
   }
 
   @Test
+  @Ignore // nocommit flakey
   public void testCompact() throws Exception {
     compactionTest(TableName.valueOf("testCompact1"), 8, CompactionState.MAJOR, false);
     compactionTest(TableName.valueOf("testCompact2"), 15, CompactionState.MINOR, false);

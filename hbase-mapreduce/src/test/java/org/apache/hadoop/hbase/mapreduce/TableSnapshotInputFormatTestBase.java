@@ -42,6 +42,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.FSUtils;
 import org.apache.hadoop.hbase.util.HFileArchiveUtil;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,6 +108,7 @@ public abstract class TableSnapshotInputFormatTestBase {
   }
 
   @Test
+  @Ignore // nocommit flakey
   // run the MR job while HBase is offline
   public void testWithMapReduceAndOfflineHBaseMultiRegion() throws Exception {
     testWithMapReduce(UTIL, "testWithMapReduceAndOfflineHBaseMultiRegion", 10, 1, 8, true);

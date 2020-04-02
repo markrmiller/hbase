@@ -49,6 +49,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
@@ -56,7 +57,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
 import org.apache.hadoop.hbase.shaded.protobuf.generated.MasterProcedureProtos;
 
 @Category({ MasterTests.class, LargeTests.class })
-
+@Ignore // nocommit flakey
 public class TestSplitWALManager {
 
   @ClassRule

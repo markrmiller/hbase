@@ -54,6 +54,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
 
 @Category({VerySlowMapReduceTests.class, LargeTests.class})
+@Ignore // nocommit flakey
 public class TestTableSnapshotInputFormat extends TableSnapshotInputFormatTestBase {
 
   @ClassRule
@@ -143,6 +144,7 @@ public class TestTableSnapshotInputFormat extends TableSnapshotInputFormatTestBa
 
   @Test
   @Override
+  @Ignore // nocommit flakey
   public void testWithMockedMapReduceMultiRegion() throws Exception {
     testWithMockedMapReduce(
         UTIL, "testWithMockedMapReduceMultiRegion", 10, 1, 10, true);
@@ -159,6 +161,7 @@ public class TestTableSnapshotInputFormat extends TableSnapshotInputFormatTestBa
   @Test
   @Override
   // run the MR job while HBase is offline
+  @Ignore // nocommit flakey
   public void testWithMapReduceAndOfflineHBaseMultiRegion() throws Exception {
     testWithMapReduce(UTIL, "testWithMapReduceAndOfflineHBaseMultiRegion", 10, 1, 10, true);
   }

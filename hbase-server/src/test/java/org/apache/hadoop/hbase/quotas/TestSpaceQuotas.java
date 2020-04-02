@@ -61,6 +61,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -72,6 +73,7 @@ import org.slf4j.LoggerFactory;
  * End-to-end test class for filesystem space quotas.
  */
 @Category(LargeTests.class)
+@Ignore // nocommit flakey
 public class TestSpaceQuotas {
 
   @ClassRule
@@ -182,6 +184,7 @@ public class TestSpaceQuotas {
   }
 
   @Test
+  @Ignore // nocommit flakey
   public void testNoCompactions() throws Exception {
     Put p = new Put(Bytes.toBytes("to_reject"));
     p.addColumn(

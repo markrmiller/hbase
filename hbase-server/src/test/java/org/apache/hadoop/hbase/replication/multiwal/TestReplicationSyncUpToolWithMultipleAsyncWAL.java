@@ -25,9 +25,11 @@ import org.apache.hadoop.hbase.testclassification.ReplicationTests;
 import org.apache.hadoop.hbase.wal.RegionGroupingProvider;
 import org.apache.hadoop.hbase.wal.WALFactory;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 @Category({ ReplicationTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestReplicationSyncUpToolWithMultipleAsyncWAL extends TestReplicationSyncUpTool {
 
   @ClassRule

@@ -62,12 +62,14 @@ import org.hamcrest.core.AllOf;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ CoprocessorTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestMetaTableMetrics {
 
   @ClassRule

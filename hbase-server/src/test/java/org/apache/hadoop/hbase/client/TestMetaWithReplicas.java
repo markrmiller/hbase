@@ -56,6 +56,7 @@ import org.apache.hadoop.hbase.zookeeper.ZNodePaths;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -67,6 +68,7 @@ import org.slf4j.LoggerFactory;
  * Tests the scenarios where replicas are enabled for the meta table
  */
 @Category(LargeTests.class)
+@Ignore // nocommit flakey
 public class TestMetaWithReplicas {
 
   @ClassRule

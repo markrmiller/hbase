@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ LargeTests.class, ClientTests.class })
+@Ignore // nocommit flakey
 public class TestHTableMultiplexerFlushCache {
 
   @ClassRule

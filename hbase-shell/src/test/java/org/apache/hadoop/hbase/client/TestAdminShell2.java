@@ -23,10 +23,12 @@ import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.jruby.embed.PathType;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ ClientTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestAdminShell2 extends AbstractTestShell {
 
   @ClassRule

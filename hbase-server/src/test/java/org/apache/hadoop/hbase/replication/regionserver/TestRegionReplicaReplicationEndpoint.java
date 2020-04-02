@@ -65,6 +65,7 @@ import org.apache.hadoop.hbase.zookeeper.ZKConfig;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -79,6 +80,7 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
  * async wal replication replays the edits to the secondary region in various scenarios.
  */
 @Category({FlakeyTests.class, LargeTests.class})
+@Ignore // nocommit flakey
 public class TestRegionReplicaReplicationEndpoint {
 
   @ClassRule

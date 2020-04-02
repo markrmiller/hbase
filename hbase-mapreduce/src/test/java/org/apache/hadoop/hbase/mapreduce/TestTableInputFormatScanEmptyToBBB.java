@@ -22,10 +22,12 @@ import org.apache.hadoop.hbase.HBaseClassTestRule;
 import org.apache.hadoop.hbase.testclassification.MapReduceTests;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ MapReduceTests.class, MediumTests.class })
+@Ignore // nocommit flakey
 public class TestTableInputFormatScanEmptyToBBB extends TestTableInputFormatScanBase {
 
   @ClassRule

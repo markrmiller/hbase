@@ -29,12 +29,14 @@ import org.apache.hadoop.hbase.master.RegionPlan;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ MasterTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestStochasticLoadBalancerBalanceCluster extends BalancerTestBase {
 
   @ClassRule

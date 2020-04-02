@@ -60,6 +60,7 @@ import org.apache.hadoop.hbase.util.HFileTestUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -72,6 +73,7 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
  * faster than the full MR cluster tests in TestHFileOutputFormat
  */
 @Category({ MiscTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestLoadIncrementalHFiles {
 
   @ClassRule

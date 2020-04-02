@@ -41,6 +41,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -48,6 +49,7 @@ import org.junit.experimental.categories.Category;
  * Test the ClusterStatus.
  */
 @Category(MediumTests.class)
+@Ignore // nocommit flakey
 public class TestClientClusterStatus {
 
   @ClassRule

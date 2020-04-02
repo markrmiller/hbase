@@ -50,6 +50,7 @@ import org.apache.hadoop.hbase.util.Pair;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -68,6 +69,7 @@ import org.slf4j.LoggerFactory;
  * {@link ResultScanner#next()} should never see partial results.
  */
 @Category(LargeTests.class)
+@Ignore // nocommit flakey
 public class TestPartialResultsFromClientSide {
 
   @ClassRule

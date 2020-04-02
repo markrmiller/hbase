@@ -31,12 +31,14 @@ import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.ReplicationTests;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ ReplicationTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestReplicationSyncUpTool extends TestReplicationSyncUpToolBase {
 
   @ClassRule

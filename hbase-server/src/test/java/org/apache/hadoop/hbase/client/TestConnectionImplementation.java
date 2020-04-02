@@ -88,6 +88,7 @@ import org.apache.hbase.thirdparty.io.netty.util.ResourceLeakDetector.Level;
  * This class is for testing HBaseConnectionManager features
  */
 @Category({LargeTests.class})
+@Ignore // nocommit flakey
 public class TestConnectionImplementation {
 
   @ClassRule

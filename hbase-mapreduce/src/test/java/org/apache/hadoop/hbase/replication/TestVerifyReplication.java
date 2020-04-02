@@ -62,6 +62,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -72,6 +73,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 
 @Category({ ReplicationTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestVerifyReplication extends TestReplicationBase {
 
   @ClassRule
@@ -157,6 +159,7 @@ public class TestVerifyReplication extends TestReplicationBase {
    * delete marker is replicated, run verify replication with and without raw to check the results.
    */
   @Test
+  @Ignore // nocommit flakey
   public void testVerifyRepJobWithRawOptions() throws Exception {
     LOG.info(name.getMethodName());
 

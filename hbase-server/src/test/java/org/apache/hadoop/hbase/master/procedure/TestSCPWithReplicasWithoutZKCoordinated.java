@@ -23,9 +23,11 @@ import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MasterTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 @Category({ MasterTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestSCPWithReplicasWithoutZKCoordinated extends TestSCPWithReplicas {
 
   @ClassRule

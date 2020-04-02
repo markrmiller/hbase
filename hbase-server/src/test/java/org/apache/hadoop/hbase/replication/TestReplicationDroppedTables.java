@@ -44,12 +44,14 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ ReplicationTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestReplicationDroppedTables extends TestReplicationBase {
 
   @ClassRule

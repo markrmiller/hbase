@@ -26,12 +26,14 @@ import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.VerySlowRegionServerTests;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 /**
  * Test Export Snapshot Tool
  */
 @Category({VerySlowRegionServerTests.class, LargeTests.class})
+@Ignore // nocommit flakey
 public class TestMobExportSnapshot extends TestExportSnapshot {
 
   @ClassRule

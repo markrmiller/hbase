@@ -50,6 +50,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.hbase.thirdparty.com.google.common.collect.Sets;
 
 @Category({ LargeTests.class })
+@Ignore // nocommit flakey
 public class TestRSGroupsKillRS extends TestRSGroupsBase {
 
   @ClassRule

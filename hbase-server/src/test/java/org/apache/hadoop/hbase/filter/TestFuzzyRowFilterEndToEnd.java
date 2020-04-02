@@ -50,6 +50,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -60,6 +61,7 @@ import org.slf4j.LoggerFactory;
 import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
 
 @Category({ FilterTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestFuzzyRowFilterEndToEnd {
 
   @ClassRule

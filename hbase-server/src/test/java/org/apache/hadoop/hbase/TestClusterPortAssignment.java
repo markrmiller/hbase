@@ -22,12 +22,14 @@ import static org.junit.Assert.assertTrue;
 import java.net.BindException;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category(MediumTests.class)
+@Ignore // nocommit flakey
 public class TestClusterPortAssignment {
   @ClassRule
   public static final HBaseClassTestRule CLASS_RULE =

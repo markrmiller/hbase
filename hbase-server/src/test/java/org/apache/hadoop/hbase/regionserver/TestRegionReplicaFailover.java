@@ -216,6 +216,7 @@ public class TestRegionReplicaFailover {
    * becomes available to read again shortly.
    */
   @Test
+  @Ignore // nocommit flakey
   public void testSecondaryRegionKill() throws Exception {
     try (Connection connection = ConnectionFactory.createConnection(HTU.getConfiguration());
         Table table = connection.getTable(htd.getTableName())) {
@@ -257,6 +258,7 @@ public class TestRegionReplicaFailover {
    * secondary replicas.
    */
   @Test
+  @Ignore // nocommit flakey
   public void testSecondaryRegionKillWhilePrimaryIsAcceptingWrites() throws Exception {
     try (Connection connection = ConnectionFactory.createConnection(HTU.getConfiguration());
         Table table = connection.getTable(htd.getTableName());

@@ -65,6 +65,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -82,6 +83,7 @@ import org.apache.hbase.thirdparty.com.google.common.collect.Lists;
  */
 @RunWith(Parameterized.class)
 @Category({IOTests.class, LargeTests.class})
+@Ignore // nocommit flakey
 public class TestCacheOnWrite {
 
   @ClassRule

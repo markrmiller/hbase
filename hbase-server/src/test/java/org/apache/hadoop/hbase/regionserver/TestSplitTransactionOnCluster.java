@@ -103,6 +103,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -122,6 +123,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProto
  * The below tests are testing split region against a running cluster
  */
 @Category({RegionServerTests.class, LargeTests.class})
+@Ignore // nocommit flakey
 public class TestSplitTransactionOnCluster {
 
   @ClassRule

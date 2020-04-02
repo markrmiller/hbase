@@ -47,6 +47,7 @@ import org.apache.hadoop.hbase.util.JVMClusterUtil.RegionServerThread;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -67,6 +68,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.generated.RegionServerStatusProto
  * Testcase for HBASE-21811.
  */
 @Category({ MasterTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestWakeUpUnexpectedProcedure {
 
   @ClassRule

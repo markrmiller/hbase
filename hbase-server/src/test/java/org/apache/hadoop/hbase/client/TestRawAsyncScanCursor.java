@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.testclassification.ClientTests;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -116,6 +117,7 @@ public class TestRawAsyncScanCursor extends AbstractTestScanCursor {
   }
 
   @Test
+  @Ignore // nocommit flakey
   public void testHeartbeatWithSparseFilterReversed()
       throws IOException, InterruptedException, ExecutionException {
     doTest(true);

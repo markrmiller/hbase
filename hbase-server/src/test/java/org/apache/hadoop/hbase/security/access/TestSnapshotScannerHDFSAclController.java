@@ -62,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({ SecurityTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestSnapshotScannerHDFSAclController {
   @ClassRule
   public static final HBaseClassTestRule CLASS_RULE =

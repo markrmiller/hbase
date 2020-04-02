@@ -46,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Category({MasterTests.class, LargeTests.class})
+@Ignore // nocommit flakey
 public class TestAssignmentOnRSCrash {
 
   @ClassRule

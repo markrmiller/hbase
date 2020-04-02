@@ -33,10 +33,12 @@ import org.apache.hadoop.hdfs.MiniDFSCluster.DataNodeProperties;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ VerySlowRegionServerTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestAsyncLogRolling extends AbstractTestLogRolling {
 
   @ClassRule

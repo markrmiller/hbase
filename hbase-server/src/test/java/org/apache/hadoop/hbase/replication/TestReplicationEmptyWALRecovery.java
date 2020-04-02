@@ -35,10 +35,12 @@ import org.apache.hadoop.hbase.wal.AbstractFSWALProvider;
 import org.apache.hadoop.hbase.wal.WAL;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category({ ReplicationTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestReplicationEmptyWALRecovery extends TestReplicationBase {
 
   @ClassRule

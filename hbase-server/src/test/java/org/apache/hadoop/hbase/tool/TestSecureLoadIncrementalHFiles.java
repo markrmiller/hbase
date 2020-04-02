@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.apache.hadoop.hbase.testclassification.MiscTests;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 /**
@@ -40,6 +41,7 @@ import org.junit.experimental.categories.Category;
  * supported as part of a LoadIncrementalFiles call.
  */
 @Category({ MiscTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestSecureLoadIncrementalHFiles extends TestLoadIncrementalHFiles {
 
   @ClassRule

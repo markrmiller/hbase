@@ -58,6 +58,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -78,6 +79,7 @@ import org.apache.hadoop.hbase.shaded.protobuf.ProtobufUtil;
  * afterward. Add any testing of HBaseHbck functionality here.
  */
 @RunWith(Parameterized.class)
+@Ignore // nocommit flakey
 @Category({ LargeTests.class, ClientTests.class })
 public class TestHbck {
   @ClassRule

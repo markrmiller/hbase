@@ -35,6 +35,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.ClassSize;
 import org.apache.hadoop.hbase.util.Threads;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 @Category({RegionServerTests.class, LargeTests.class})
 @RunWith(Parameterized.class)
+@Ignore // nocommit flakey
 public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore {
 
   @ClassRule
@@ -508,6 +510,7 @@ public class TestCompactingToCellFlatMapMemStore extends TestCompactingMemStore 
 
   @Override
   @Test
+  @Ignore // nocommit flakey
   public void testPuttingBackChunksWithOpeningScanner() throws IOException {
     byte[] row = Bytes.toBytes("testrow");
     byte[] fam = Bytes.toBytes("testfamily");

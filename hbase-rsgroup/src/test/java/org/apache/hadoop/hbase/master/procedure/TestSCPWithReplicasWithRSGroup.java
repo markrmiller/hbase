@@ -26,6 +26,7 @@ import org.apache.hadoop.hbase.rsgroup.RSGroupAdminEndpoint;
 import org.apache.hadoop.hbase.rsgroup.RSGroupBasedLoadBalancer;
 import org.apache.hadoop.hbase.testclassification.MediumTests;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -54,6 +55,7 @@ public class TestSCPWithReplicasWithRSGroup extends TestSCPBase {
   }
 
   @Test
+  @Ignore // nocommit flakey
   public void testCrashTargetRs() throws Exception {
     testRecoveryAndDoubleExecution(false, false);
   }

@@ -26,12 +26,14 @@ import org.apache.hadoop.hbase.snapshot.SnapshotTestingUtils;
 import org.apache.hadoop.hbase.testclassification.LargeTests;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.experimental.categories.Category;
 
 /**
  * Test to verify that the cloned table is independent of the table from which it was cloned
  */
 @Category(LargeTests.class)
+@Ignore // nocommit flakey
 public class TestMobSnapshotCloneIndependence extends TestSnapshotCloneIndependence {
 
   @ClassRule

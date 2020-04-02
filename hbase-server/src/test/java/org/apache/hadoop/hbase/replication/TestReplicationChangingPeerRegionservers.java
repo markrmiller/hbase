@@ -36,6 +36,7 @@ import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hbase.util.JVMClusterUtil;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -51,6 +52,7 @@ import org.apache.hbase.thirdparty.com.google.common.collect.ImmutableList;
  */
 @RunWith(Parameterized.class)
 @Category({ ReplicationTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestReplicationChangingPeerRegionservers extends TestReplicationBase {
 
   @ClassRule

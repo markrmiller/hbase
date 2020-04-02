@@ -40,6 +40,7 @@ import org.apache.zookeeper.KeeperException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -47,6 +48,7 @@ import org.junit.experimental.categories.Category;
  * Testcase for HBASE-23594.
  */
 @Category({ MasterTests.class, LargeTests.class })
+@Ignore // nocommit flakey
 public class TestRaceBetweenSCPAndTRSP {
 
   @ClassRule

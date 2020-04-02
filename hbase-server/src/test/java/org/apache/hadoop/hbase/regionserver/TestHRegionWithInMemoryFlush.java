@@ -30,6 +30,7 @@ import org.apache.hadoop.hbase.wal.WAL;
 import org.apache.hadoop.hbase.wal.WALFactory;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 @Category({VerySlowRegionServerTests.class, LargeTests.class})
 @SuppressWarnings("deprecation")
+@Ignore // nocommit flakey
 public class TestHRegionWithInMemoryFlush extends TestHRegion {
 
   @ClassRule
