@@ -593,6 +593,7 @@
              ex: mvn test -Dtest.exclude.pattern=**/TestFoo.java,**/TestBar.java
               -->
               <exclude>${test.exclude.pattern}</exclude>
+              <exclude>**/*$*</exclude>
             </excludes>
             <properties>
               <property>
